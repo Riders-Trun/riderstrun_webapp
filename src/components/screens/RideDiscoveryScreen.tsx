@@ -259,7 +259,7 @@ const RideDiscoveryScreen = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 overflow-hidden">
+      <div className="bg-gray-50">
         <GlobalHeader 
           title="Route Discovery"
           showBack={true}
@@ -277,7 +277,7 @@ const RideDiscoveryScreen = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-hidden">
+    <div className="bg-gray-50">
       <GlobalHeader 
         title="Route Discovery"
         subtitle="Explore amazing routes"

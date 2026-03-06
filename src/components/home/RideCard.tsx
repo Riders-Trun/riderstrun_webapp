@@ -133,7 +133,7 @@ const RideCard = ({ ride }: RideCardProps) => {
       )}
       
       {/* Premium Header with Gradient */}
-      <div className={`relative h-32 bg-gradient-to-r ${getTypeGradient(ride.type)} transition-all duration-500 group-hover:scale-105`}>
+      <div className={`relative h-32 bg-gradient-to-r ${getTypeGradient(ride.type)} transition-all duration-500`}>
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300" />
         
         {/* Header Content */}

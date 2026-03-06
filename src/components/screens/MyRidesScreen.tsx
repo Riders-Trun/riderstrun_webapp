@@ -142,7 +142,7 @@ const MyRidesScreen = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-hidden">
+    <div className="bg-gray-50">
       {/* Global Header */}
       <GlobalHeader 
         title="My Rides"
@@ -152,7 +152,7 @@ const MyRidesScreen = () => {
         notificationCount={3}
       />
 
-      <div className="p-3 overflow-hidden">
+      <div className="p-3">
         <Tabs defaultValue="upcoming" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="upcoming" className="text-xs">Upcoming</TabsTrigger>

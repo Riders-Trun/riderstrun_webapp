@@ -228,7 +228,7 @@ const HomeScreen = () => {
 
   return (
     <FadeIn>
-      <div className="min-h-screen bg-gray-50 overflow-hidden">
+      <div className="bg-gray-50">
         <GlobalHeader 
           showSearch={true}
           showLocation={true}
