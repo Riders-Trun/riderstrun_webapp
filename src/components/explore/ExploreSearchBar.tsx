@@ -21,7 +21,7 @@ const ExploreSearchBar = ({
     <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-100">
       <div className="px-4 py-3">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-bold text-gray-900">Explore</h1>
+          <h1 className="text-xl font-bold text-gray-900">Explore</h1>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

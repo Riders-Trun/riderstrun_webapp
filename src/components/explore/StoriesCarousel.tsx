@@ -60,7 +60,7 @@ const StoriesCarousel = ({
       <div 
         className={cn(
           "relative flex-shrink-0 cursor-pointer group",
-          isCompact ? "w-16" : "w-20"
+          isCompact ? "w-14" : "w-16"
         )}
         onClick={() => handleStoryClick(story.id)}
       >
@@ -70,7 +70,7 @@ const StoriesCarousel = ({
           story.user.isViewed && "bg-gray-300"
         )}>
           <div className="bg-white rounded-full p-0.5">
-            <Avatar className={cn(isCompact ? "w-14 h-14" : "w-16 h-16")}>
+            <Avatar className={cn(isCompact ? "w-12 h-12" : "w-14 h-14")}>
               <AvatarImage src={story.preview} className="object-cover" />
               <AvatarFallback className="bg-orange-100 text-orange-600 font-semibold">
                 {story.user.name[0]}
@@ -120,7 +120,7 @@ const StoriesCarousel = ({
     <div 
       className={cn(
         "relative flex-shrink-0 cursor-pointer group",
-        isCompact ? "w-16" : "w-20"
+        isCompact ? "w-14" : "w-16"
       )}
       onClick={() => {
         if (navigator.vibrate) navigator.vibrate(50);
@@ -128,7 +128,7 @@ const StoriesCarousel = ({
       }}
     >
       <div className="relative rounded-full border-2 border-dashed border-orange-300 hover:border-orange-500 transition-colors">
-        <Avatar className={cn(isCompact ? "w-14 h-14" : "w-16 h-16")}>
+        <Avatar className={cn(isCompact ? "w-12 h-12" : "w-14 h-14")}>
           <div className="w-full h-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
             <Plus className="w-6 h-6 text-orange-500" />
           </div>
@@ -222,28 +222,28 @@ const StoriesCarousel = ({
           <Button
             variant="outline"
             size="sm"
-            className="flex-shrink-0 border-orange-200 text-orange-600 hover:bg-orange-50"
+            className="flex-shrink-0 border-orange-200 text-orange-600 hover:bg-orange-50 h-8 text-xs px-3"
             onClick={() => {/* TODO: Open camera */}}
           >
-            <Camera className="w-4 h-4 mr-1" />
+            <Camera className="w-3.5 h-3.5 mr-1" />
             Camera
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="flex-shrink-0 border-blue-200 text-blue-600 hover:bg-blue-50"
+            className="flex-shrink-0 border-blue-200 text-blue-600 hover:bg-blue-50 h-8 text-xs px-3"
             onClick={() => {/* TODO: Quick message */}}
           >
-            <MessageCircle className="w-4 h-4 mr-1" />
+            <MessageCircle className="w-3.5 h-3.5 mr-1" />
             Quick Message
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="flex-shrink-0 border-green-200 text-green-600 hover:bg-green-50"
+            className="flex-shrink-0 border-green-200 text-green-600 hover:bg-green-50 h-8 text-xs px-3"
             onClick={() => {/* TODO: Share location */}}
           >
-            <Share2 className="w-4 h-4 mr-1" />
+            <Share2 className="w-3.5 h-3.5 mr-1" />
             Share Location
           </Button>
         </div>

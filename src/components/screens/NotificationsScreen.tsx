@@ -1,8 +1,7 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Clock, MapPin, Users, AlertCircle, CheckCircle } from "lucide-react";
+import { Bell, Clock, MapPin, Users, AlertCircle, CheckCircle, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import GlobalHeader from "@/components/GlobalHeader";
 import { MOCK_NOTIFICATIONS } from "@/data/notifications";
@@ -15,7 +14,7 @@ const NotificationsScreen = () => {
   };
 
   const markAsRead = (id: number) => {
-    setNotifications(prev => prev.map(notif => 
+    setNotifications(prev => prev.map(notif =>
       notif.id === id ? { ...notif, isRead: true } : notif
     ));
   };
@@ -31,102 +30,143 @@ const NotificationsScreen = () => {
     }
   };
 
-  const getNotificationColor = (type: string) => {
+  const getIconStyle = (type: string) => {
     switch (type) {
-      case 'reminder': return 'text-blue-600 bg-gradient-to-br from-blue-100 to-blue-200';
-      case 'update': return 'text-orange-600 bg-gradient-to-br from-orange-100 to-orange-200';
-      case 'delay': return 'text-red-600 bg-gradient-to-br from-red-100 to-red-200';
-      case 'new_ride': return 'text-green-600 bg-gradient-to-br from-green-100 to-green-200';
-      case 'rider_joined': return 'text-purple-600 bg-gradient-to-br from-purple-100 to-purple-200';
-      default: return 'text-gray-600 bg-gradient-to-br from-gray-100 to-gray-200';
+      case 'reminder': return 'text-blue-600 bg-blue-50';
+      case 'update': return 'text-orange-600 bg-orange-50';
+      case 'delay': return 'text-red-500 bg-red-50';
+      case 'new_ride': return 'text-green-600 bg-green-50';
+      case 'rider_joined': return 'text-purple-600 bg-purple-50';
+      default: return 'text-gray-600 bg-gray-50';
     }
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadNotifications = notifications.filter(n => !n.isRead);
+  const readNotifications = notifications.filter(n => n.isRead);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Global Header */}
-      <GlobalHeader 
+    <div className="bg-gray-50">
+      <GlobalHeader
         title="Notifications"
-        subtitle={`Stay updated on your rides${unreadCount > 0 ? ` • ${unreadCount} new` : ''}`}
+        subtitle={`Stay updated on your rides${unreadCount > 0 ? ` · ${unreadCount} new` : ''}`}
         showBack={true}
       />
 
-      <div className="p-3 space-y-3">
-        {/* Actions */}
-        <div className="flex justify-end mb-4">
-          {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={markAllAsRead}
-              className="hover:bg-orange-50 hover:text-orange-700 transition-colors"
-            >
-              <CheckCircle className="w-4 h-4 mr-1" />
-              Mark all
-            </Button>
-          )}
-        </div>
-        {notifications.length > 0 ? (
-          notifications.map((notification) => {
-            const Icon = getNotificationIcon(notification.type);
-            const colorClass = getNotificationColor(notification.type);
-            
-            return (
-              <Card 
-                key={notification.id} 
-                className={`transition-all duration-300 hover:shadow-lg hover:scale-[1.01] border-0 shadow-md bg-white/90 backdrop-blur-sm ${
-                  !notification.isRead ? 'ring-2 ring-orange-200 bg-orange-50/50' : ''
-                }`}
-                onClick={() => !notification.isRead && markAsRead(notification.id)}
+      <div className="p-3 space-y-4 max-w-2xl mx-auto">
+        {/* Unread Section */}
+        {unreadNotifications.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                New ({unreadCount})
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 h-7 px-2"
               >
-                <CardContent className="p-4">
-                  <div className="flex gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${colorClass}`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-sm text-gray-900">{notification.title}</h3>
-                          <p className="text-sm text-gray-600 mt-1 leading-relaxed">{notification.message}</p>
-                          <div className="flex items-center gap-3 mt-3">
-                            <span className="text-xs text-gray-500 font-medium">{notification.time}</span>
-                            {!notification.isRead && (
-                              <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-                                New
-                              </Badge>
-                            )}
+                <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                Mark all read
+              </Button>
+            </div>
+
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="divide-y divide-gray-100">
+                {unreadNotifications.map((notification) => {
+                  const Icon = getNotificationIcon(notification.type);
+                  return (
+                    <div
+                      key={notification.id}
+                      className="flex items-start gap-3 p-3.5 bg-orange-50/40 hover:bg-orange-50/70 transition-colors cursor-pointer"
+                      onClick={() => markAsRead(notification.id)}
+                    >
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${getIconStyle(notification.type)}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm text-gray-900">{notification.title}</h3>
+                            <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{notification.message}</p>
+                            <span className="text-[10px] text-gray-400 mt-1 block">{notification.time}</span>
                           </div>
+                          <Button
+                            size="sm"
+                            className="bg-orange-500 hover:bg-orange-600 text-white text-xs h-7 px-3 flex-shrink-0"
+                          >
+                            {notification.action}
+                          </Button>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant={notification.action === "Acknowledged" ? "secondary" : "default"}
-                          className={
-                            notification.action !== "Acknowledged" 
-                              ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105" 
-                              : "bg-gray-100 text-gray-600"
-                          }
-                          disabled={notification.action === "Acknowledged"}
-                        >
-                          {notification.action}
-                        </Button>
+                      </div>
+                      <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 mt-2" />
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Read Section */}
+        {readNotifications.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Earlier
+              </span>
+            </div>
+
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <div className="divide-y divide-gray-50">
+                {readNotifications.map((notification) => {
+                  const Icon = getNotificationIcon(notification.type);
+                  return (
+                    <div
+                      key={notification.id}
+                      className="flex items-start gap-3 p-3.5 hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 opacity-60 ${getIconStyle(notification.type)}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm text-gray-700">{notification.title}</h3>
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notification.message}</p>
+                            <span className="text-[10px] text-gray-400 mt-1 block">{notification.time}</span>
+                          </div>
+                          {notification.action !== "Acknowledged" ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-7 px-3 flex-shrink-0 border-gray-200 text-gray-600"
+                            >
+                              {notification.action}
+                            </Button>
+                          ) : (
+                            <span className="text-[10px] text-gray-400 flex-shrink-0 mt-1">Done</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        ) : (
-          <Card className="p-8 text-center shadow-lg bg-white/90 backdrop-blur-sm border-0">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
-              <Bell className="w-8 h-8 text-gray-400" />
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {notifications.length === 0 && (
+          <div className="text-center py-16">
+            <div className="w-14 h-14 mx-auto mb-3 bg-gray-100 rounded-2xl flex items-center justify-center">
+              <Bell className="w-6 h-6 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No notifications</h3>
-            <p className="text-gray-600">You're all caught up! Check back later for updates.</p>
-          </Card>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">All caught up!</h3>
+            <p className="text-xs text-gray-500">No new notifications right now.</p>
+          </div>
         )}
       </div>
     </div>

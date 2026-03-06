@@ -217,7 +217,7 @@ const ExploreScreen = () => {
     return true;
   });
 
-  return (    <div className="min-h-screen bg-gray-50">
+  return (    <div className="bg-gray-50">
       {/* Search Header */}
       <ExploreSearchBar
         searchQuery={searchQuery}
@@ -237,7 +237,7 @@ const ExploreScreen = () => {
       {/* Main Content Tabs */}
       <div className="flex-1">
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mx-4 mt-4">
+          <TabsList className="grid grid-cols-3 mx-4 mt-4">
             <TabsTrigger value="nearby">
               <Users className="w-4 h-4 mr-1" />
               Nearby
