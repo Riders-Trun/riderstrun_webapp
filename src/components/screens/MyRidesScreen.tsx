@@ -6,72 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Clock, Users, Calendar, Star } from "lucide-react";
 import GlobalHeader from "@/components/GlobalHeader";
+import { UPCOMING_RIDES, PAST_RIDES, ORGANIZED_RIDES } from "@/data/rides";
 
 const MyRidesScreen = () => {
-  const upcomingRides = [
-    {
-      id: 1,
-      title: "Nandi Sunrise Sprint",
-      date: "Sun, 6 AM",
-      distance: "80 km round trip",
-      organizer: "Rajesh Kumar",
-      type: "Breakfast",
-      joinedCount: 12,
-      status: "confirmed",
-      isCurrentUserOrganizer: true
-    },
-    {
-      id: 2,
-      title: "Coorg Coffee Trail",
-      date: "Sat, 5:30 AM", 
-      distance: "120 km round trip",
-      organizer: "Priya Singh",
-      type: "Long",
-      joinedCount: 8,
-      status: "confirmed",
-      isCurrentUserOrganizer: false
-    }
-  ];
-
-  const pastRides = [
-    {
-      id: 3,
-      title: "Mysore Palace Run",
-      date: "Dec 24, 2023",
-      distance: "150 km round trip",
-      organizer: "Amit Patel",
-      type: "Long",
-      joinedCount: 10,
-      status: "completed",
-      isCurrentUserOrganizer: false
-    },
-    {
-      id: 4,
-      title: "Morning Beach Drive",
-      date: "Dec 17, 2023",
-      distance: "60 km round trip", 
-      organizer: "Sneha Reddy",
-      type: "Breakfast",
-      joinedCount: 8,
-      status: "completed",
-      isCurrentUserOrganizer: false
-    }
-  ];
-
-  const organizedRides = [
-    {
-      id: 5,
-      title: "Beginner's Weekend Ride",
-      date: "Next Sun, 7 AM",
-      distance: "40 km round trip",
-      organizer: "You",
-      type: "Beginner",
-      joinedCount: 6,
-      maxRiders: 10,
-      status: "organizing",
-      isCurrentUserOrganizer: true
-    }
-  ];
+  const upcomingRides = UPCOMING_RIDES;
+  const pastRides = PAST_RIDES;
+  const organizedRides = ORGANIZED_RIDES;
 
   const RideCard = ({ ride, showActions = false, isPast = false }: any) => (
     <Card className="w-full max-w-full overflow-hidden">

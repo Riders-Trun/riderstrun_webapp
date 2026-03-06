@@ -7,29 +7,9 @@ import { MapPin, Clock, Users, Star, Share2, UserPlus, Navigation, Camera, Fuel 
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { formatRideDate, getTimeUntilRide, getRideTypeEmoji } from "@/lib/rideUtils";
+import { TYPE_GRADIENTS } from "@/constants";
+import type { Ride } from "@/types";
 import "./RideCard.css";
-
-interface Ride {
-  id: number;
-  title: string;
-  date: string;
-  distance: string;
-  organizer: string;
-  location: string;
-  type: string;
-  joinedCount: number;
-  maxRiders: number;
-  isOrganizer: boolean;
-  distanceFromUser: string;
-  pillionAvailable?: boolean;
-  pillionSlots?: number;
-  tripCode?: string;
-  brand?: string;
-  rating?: number;
-  totalRatings?: number;
-  estimatedCost?: string;
-  highlights?: string[];
-}
 
 interface RideCardProps {
   ride: Ride;
@@ -92,14 +72,7 @@ const RideCard = ({ ride }: RideCardProps) => {
   };
 
   const getTypeGradient = (type: string) => {
-    const gradients = {
-      "Breakfast": "from-orange-500 to-red-500",
-      "Adventure": "from-green-500 to-emerald-600",
-      "Scenic": "from-blue-500 to-cyan-600",
-      "Long Distance": "from-purple-500 to-pink-600",
-      "Night Ride": "from-indigo-500 to-purple-600"
-    };
-    return gradients[type as keyof typeof gradients] || "from-gray-500 to-gray-600";
+    return TYPE_GRADIENTS[type] || "from-gray-500 to-gray-600";
   };
 
   const getDifficultyColor = (distance: string) => {

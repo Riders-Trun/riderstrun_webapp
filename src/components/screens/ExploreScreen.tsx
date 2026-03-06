@@ -23,117 +23,7 @@ import CommunityInitiativeCard from "@/components/explore/CommunityInitiativeCar
 import InviteSystem from "@/components/explore/InviteSystem";
 import StoryViewer from "@/components/explore/StoryViewer";
 import StoryCreator from "@/components/explore/StoryCreator";
-
-// Mock data for nearby riders
-const nearbyRiders = [
-  {
-    id: 1,
-    name: "Arjun Patel",
-    avatar: "/api/placeholder/40/40",
-    bike: "Royal Enfield Classic 350",
-    points: 1250,
-    streak: 15,
-    distance: "2.5 km",
-    status: "active" as const,
-    rideStyle: ["Adventure", "Scenic", "Weekend"],
-    lastSeen: "Active now",
-    isOnline: true
-  },
-  {
-    id: 2,
-    name: "Priya Sharma",
-    avatar: "/api/placeholder/40/40",
-    bike: "KTM Duke 390",
-    points: 980,
-    streak: 8,
-    distance: "4.1 km",
-    status: "looking" as const,
-    rideStyle: ["Short Rides", "City", "Breakfast"],
-    lastSeen: "2 hours ago",
-    isOnline: false
-  },
-  {
-    id: 3,
-    name: "Vikram Singh",
-    avatar: "/api/placeholder/40/40",
-    bike: "Bajaj Dominar 400",
-    points: 2100,
-    streak: 23,
-    distance: "1.8 km",
-    status: "upcoming" as const,
-    rideStyle: ["Long Distance", "Highway", "Night"],
-    lastSeen: "Planning Sunday ride",
-    isOnline: true
-  }
-];
-
-// Mock data for crew intents
-const crewIntents = [
-  {
-    id: 1,
-    creator: {
-      name: "Rohit Kumar",
-      avatar: "/api/placeholder/40/40",
-      rating: 4.8
-    },
-    title: "Sunday Breakfast Ride to Nandi Hills",
-    description: "Looking for 4 riders for a Sunday breakfast ride. Avg speed 60–80km/h. From JP Nagar to Nandi Hills. No drama, full helmets.",
-    lookingFor: 4,
-    currentMembers: 2,
-    rideType: "Breakfast",
-    timePreference: "Early Morning",
-    skillLevel: "Intermediate",
-    route: "JP Nagar to Nandi Hills",
-    speed: "60-80 km/h",
-    date: "2024-01-14",
-    requirements: ["Full Helmet", "No Drama", "Experience"],
-    timeAgo: "2 hours ago"
-  },
-  {
-    id: 2,
-    creator: {
-      name: "Sneha Reddy",
-      avatar: "/api/placeholder/40/40",
-      rating: 4.9
-    },
-    title: "Women-Only Evening Ride",
-    description: "Safe evening ride for women riders. Exploring city routes with coffee stops. All skill levels welcome!",
-    lookingFor: 6,
-    currentMembers: 4,
-    rideType: "City",
-    timePreference: "Evening",
-    skillLevel: "Mixed Levels",
-    route: "Indiranagar to UB City",
-    speed: "40-60 km/h",
-    date: "2024-01-13",
-    requirements: ["Women Only", "Safety First"],
-    timeAgo: "5 hours ago"
-  }
-];
-
-// Mock data for mentors
-const mentors = [
-  {
-    id: 1,
-    name: "Captain Rajesh",
-    avatar: "/api/placeholder/60/60",
-    title: "Safety Champion & Route Master",
-    achievements: [
-      { type: "consistent" as const, label: "Consistent Rides", value: "127", icon: Crown },
-      { type: "safety" as const, label: "Safety Streak", value: "365 days", icon: Crown },
-      { type: "pillion" as const, label: "Pillion Friendly", value: "89%", icon: Crown },
-      { type: "routes" as const, label: "Routes Created", value: "43", icon: Crown }
-    ],
-    stats: {
-      ridesOrganized: 127,
-      safetyStreak: 365,
-      followersCount: 1200,
-      rating: 4.9
-    },
-    specialties: ["Safety Training", "Long Distance", "Route Planning", "Mentoring"],
-    isFollowing: false
-  }
-];
+import { NEARBY_RIDERS, CREW_INTENTS, MENTORS } from "@/data/explore";
 
 // Mock data for ride moments
 const rideMoments = [
@@ -319,7 +209,7 @@ const ExploreScreen = () => {
   };
 
   // Filter nearby riders based on selected filters
-  const filteredRiders = nearbyRiders.filter(rider => {
+  const filteredRiders = NEARBY_RIDERS.filter(rider => {
     if (riderFilters.status !== "all" && rider.status !== riderFilters.status) return false;
     if (riderFilters.rideStyle !== "all" && !rider.rideStyle.some(style => 
       style.toLowerCase().includes(riderFilters.rideStyle.toLowerCase())
@@ -424,7 +314,7 @@ const ExploreScreen = () => {
               </div>
               
               <div className="grid grid-cols-1 gap-4">
-                {mentors.map((mentor) => (
+                {MENTORS.map((mentor) => (
                   <MentorHighlightCard
                     key={mentor.id}
                     mentor={mentor}
@@ -460,7 +350,7 @@ const ExploreScreen = () => {
           {/* Crew Finder Tab */}
           <TabsContent value="crew" className="px-4 space-y-6 mt-6">
             <CrewFinder
-              crewIntents={crewIntents}
+              crewIntents={CREW_INTENTS}
               onJoinCrew={handleJoinCrew}
               onCreateIntent={handleCreateCrewIntent}
             />

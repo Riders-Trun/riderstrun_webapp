@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { POPULAR_LOCATIONS } from "@/constants";
 
 interface GlobalHeaderProps {
   title?: string;
@@ -54,10 +55,7 @@ const GlobalHeader = ({
   const [isCustomLocation, setIsCustomLocation] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
 
-  const popularLocations = [
-    "Bangalore", "Mumbai", "Delhi", "Chennai", "Hyderabad", 
-    "Pune", "Kolkata", "Goa", "Mysore", "Coorg"
-  ];
+  const popularLocations = POPULAR_LOCATIONS;
 
   const handleBack = () => {
     if (customBackAction) {

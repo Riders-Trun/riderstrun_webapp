@@ -7,6 +7,7 @@ import GlobalHeader from "@/components/GlobalHeader";
 import { QrCode, Hash, ArrowLeft, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { SUGGESTED_TRIP_CODES } from "@/constants";
 
 const JoinRideScreen = () => {
   const [tripCode, setTripCode] = useState("");
@@ -40,7 +41,7 @@ const JoinRideScreen = () => {
     setTimeout(() => handleJoinRide(), 300);
   };
 
-  const suggestedCodes = ["NH001", "CT002", "CH003", "WM004", "MC005"];
+  const suggestedCodes = [...SUGGESTED_TRIP_CODES];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
