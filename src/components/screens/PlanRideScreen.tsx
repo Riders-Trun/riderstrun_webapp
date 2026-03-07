@@ -1,6 +1,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { validateRideForm } from "@/lib/validations";
 import GlobalHeader from "@/components/GlobalHeader";
 import UserStats from "@/components/ride-planning/UserStats";
 import PopularRoutes from "@/components/ride-planning/PopularRoutes";
@@ -28,6 +30,8 @@ const PlanRideScreen = () => {
 
   const [pitStops, setPitStops] = useState<string[]>([]);
   const [rules, setRules] = useState<string[]>([]);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   // Mock user streak data
   const userStats = {
@@ -97,7 +101,7 @@ const PlanRideScreen = () => {
     }
   ];
 
-  const handlePresetSelect = (preset: any) => {
+  const handlePresetSelect = (preset: { title: string; type: string; time: string; maxRiders: string; description: string; pitStops: string[]; rules: string[] }) => {
     setFormData({
       ...formData,
       title: preset.title,
@@ -110,7 +114,7 @@ const PlanRideScreen = () => {
     setRules(preset.rules);
   };
 
-  const handleRouteSelect = (route: any) => {
+  const handleRouteSelect = (route: { id: string; name: string; distance: string; difficulty: string; route: { startPoint: string; destination: string; time: string } }) => {
     setFormData({
       ...formData,
       selectedRoute: route.id,
@@ -144,7 +148,23 @@ const PlanRideScreen = () => {
   };
 
   const handlePublish = () => {
-    console.log("Publishing ride:", { formData, pitStops, rules });
+    const result = validateRideForm(formData);
+    if (!result.success) {
+      setFormErrors(result.errors);
+      const firstError = Object.values(result.errors)[0];
+      toast({
+        title: "Validation Error",
+        description: firstError,
+        variant: "destructive",
+      });
+      return;
+    }
+    setFormErrors({});
+    console.log("Publishing ride:", { formData: result.data, pitStops, rules });
+    toast({
+      title: "Ride Published!",
+      description: "Your ride has been created successfully.",
+    });
   };
 
   return (

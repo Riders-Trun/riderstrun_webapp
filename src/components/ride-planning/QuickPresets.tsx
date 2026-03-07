@@ -1,11 +1,12 @@
 
 import { Utensils, Mountain, Route, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { PresetData } from "@/types";
 
 interface PresetRide {
   id: string;
   title: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   preset: {
     title: string;
@@ -19,7 +20,7 @@ interface PresetRide {
 }
 
 interface QuickPresetsProps {
-  onPresetSelect: (preset: any) => void;
+  onPresetSelect: (preset: PresetData) => void;
 }
 
 const QuickPresets = ({ onPresetSelect }: QuickPresetsProps) => {

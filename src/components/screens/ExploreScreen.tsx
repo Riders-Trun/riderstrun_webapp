@@ -12,17 +12,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Import new purposeful components
-import ExploreSearchBar from "@/components/explore/ExploreSearchBar";
-import StoriesCarousel from "@/components/explore/StoriesCarousel";
-import NearbyRiderCard from "@/components/explore/NearbyRiderCard";
-import CrewFinder from "@/components/explore/CrewFinder";
-import MentorHighlightCard from "@/components/explore/MentorHighlightCard";
-import RideMomentCard from "@/components/explore/RideMomentCard";
-import CommunityInitiativeCard from "@/components/explore/CommunityInitiativeCard";
-import InviteSystem from "@/components/explore/InviteSystem";
-import StoryViewer from "@/components/explore/StoryViewer";
-import StoryCreator from "@/components/explore/StoryCreator";
+// Import explore components
+import ExploreSearchBar from "@/components/explore/sections/ExploreSearchBar";
+import StoriesCarousel from "@/components/explore/sections/StoriesCarousel";
+import NearbyRiderCard from "@/components/explore/cards/NearbyRiderCard";
+import CrewFinder from "@/components/explore/sections/CrewFinder";
+import MentorHighlightCard from "@/components/explore/cards/MentorHighlightCard";
+import RideMomentCard from "@/components/explore/cards/RideMomentCard";
+import CommunityInitiativeCard from "@/components/explore/cards/CommunityInitiativeCard";
+import InviteSystem from "@/components/explore/sections/InviteSystem";
+import StoryViewer from "@/components/explore/stories/StoryViewer";
+import StoryCreator from "@/components/explore/stories/StoryCreator";
 import { NEARBY_RIDERS, CREW_INTENTS, MENTORS } from "@/data/explore";
 
 // Mock data for ride moments
@@ -154,7 +154,7 @@ const ExploreScreen = () => {
     setShowStoryCreator(true);
   };
 
-  const handlePublishStory = (storyContent: any) => {
+  const handlePublishStory = (storyContent: { text: string; image?: string; backgroundColor?: string; textColor?: string }) => {
     console.log("Publishing story:", storyContent);
   };
 
@@ -170,7 +170,7 @@ const ExploreScreen = () => {
     console.log("Joining crew:", crewId);
   };
 
-  const handleCreateCrewIntent = (intent: any) => {
+  const handleCreateCrewIntent = (intent: { title: string; description: string; lookingFor: number; rideType: string }) => {
     console.log("Creating crew intent:", intent);
   };
 

@@ -1,70 +1,33 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import GlobalHeader from "@/components/GlobalHeader";
 import RideFilters from "@/components/home/RideFilters";
 import TrendingSection from "@/components/home/TrendingSection";
-import RideCard from "@/components/home/RideCard";
+import VirtualizedRideList from "@/components/home/VirtualizedRideList";
 import DrawableFilters from "@/components/home/DrawableFilters";
 import ActiveFilters from "@/components/home/ActiveFilters";
 import HomeScreenSkeleton from "@/components/home/HomeScreenSkeleton";
 import FadeIn from "@/components/ui/FadeIn";
-import { useSimulatedLoading } from "@/hooks/useLoading";
-import { AVAILABLE_RIDES } from "@/data/rides";
-import { RIDE_TYPES, DEFAULT_FILTERS } from "@/constants";
-import type { FilterOptions } from "@/types";
+import { useFilters } from "@/hooks/useFilters";
+import { useRides } from "@/hooks/useRides";
+import { RIDE_TYPES } from "@/constants";
 
 const HomeScreen = () => {
-  const { isLoading } = useSimulatedLoading(1500);
+  const { data: rides = [], isLoading } = useRides();
   const [searchLocation, setSearchLocation] = useState("Bangalore");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filters, setFilters] = useState<FilterOptions>({
-    ...DEFAULT_FILTERS,
-    rideType: [],
-  });
 
-  const handleRemoveFilter = (filterType: string, value?: string) => {
-    switch (filterType) {
-      case "sort":
-        setFilters(prev => ({ ...prev, sortBy: "nearest" }));
-        break;
-      case "bikeCC":
-        setFilters(prev => ({ ...prev, bikeCC: "any" }));
-        break;
-      case "duration":
-        setFilters(prev => ({ ...prev, duration: "any" }));
-        break;
-      case "range":
-        setFilters(prev => ({ ...prev, range: [0, 100] }));
-        break;
-      case "groupSize":
-        setFilters(prev => ({ ...prev, groupSize: [1, 20] }));
-        break;
-      case "rideType":
-        setFilters(prev => ({
-          ...prev,
-          rideType: prev.rideType.filter(type => type !== value)
-        }));
-        break;
-    }
-  };
+  const {
+    filters,
+    setFilters,
+    isFilterOpen,
+    setIsFilterOpen,
+    activeFiltersCount,
+    handleRemoveFilter,
+    clearAllFilters,
+  } = useFilters();
 
-  const getActiveFiltersCount = () => {
-    let count = 0;
-    if (filters.sortBy !== "nearest") count++;
-    if (filters.bikeCC !== "any") count++;
-    if (filters.duration !== "any") count++;
-    if (filters.rideType.length > 0) count++;
-    if (filters.range[0] > 0 || filters.range[1] < 100) count++;
-    if (filters.groupSize[0] > 1 || filters.groupSize[1] < 20) count++;
-    return count;
-  };
-
-  const handleClearAllFilters = () => {
-    setFilters({ ...DEFAULT_FILTERS, rideType: [] });
-  };
-
-  const filteredRides = AVAILABLE_RIDES.filter(ride => {
+  const filteredRides = useMemo(() => rides.filter(ride => {
     const matchesFilter = selectedFilter === "All" || ride.type === selectedFilter;
     const matchesSearch = searchQuery === "" ||
       ride.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,9 +53,9 @@ const HomeScreen = () => {
       filters.rideType.some(type => ride.type.toLowerCase().includes(type));
 
     return matchesFilter && matchesSearch && matchesCC && matchesGroupSize && matchesDuration && matchesRideType;
-  });
+  }), [rides, selectedFilter, searchQuery, filters]);
 
-  const sortedRides = [...filteredRides].sort((a, b) => {
+  const sortedRides = useMemo(() => [...filteredRides].sort((a, b) => {
     switch (filters.sortBy) {
       case "earliest":
         return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -104,7 +67,7 @@ const HomeScreen = () => {
       default:
         return parseFloat(a.distanceFromUser) - parseFloat(b.distanceFromUser);
     }
-  });
+  }), [filteredRides, filters.sortBy]);
 
   if (isLoading) {
     return <HomeScreenSkeleton />;
@@ -123,7 +86,7 @@ const HomeScreen = () => {
           searchLocation={searchLocation}
           onLocationChange={setSearchLocation}
           onFilterClick={() => setIsFilterOpen(true)}
-          filterCount={getActiveFiltersCount()}
+          filterCount={activeFiltersCount}
           notificationCount={3}
         />
 
@@ -138,7 +101,7 @@ const HomeScreen = () => {
         <ActiveFilters
           filters={filters}
           onRemoveFilter={handleRemoveFilter}
-          onClearAll={handleClearAllFilters}
+          onClearAll={clearAllFilters}
         />
 
         <TrendingSection />
@@ -157,13 +120,7 @@ const HomeScreen = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {sortedRides.map((ride, index) => (
-              <FadeIn key={ride.id} delay={index * 100} duration="duration-600">
-                <RideCard ride={ride} />
-              </FadeIn>
-            ))}
-          </div>
+          <VirtualizedRideList rides={sortedRides} />
 
           {sortedRides.length === 0 && (
             <div className="text-center py-16">

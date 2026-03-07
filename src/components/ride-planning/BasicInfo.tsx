@@ -11,7 +11,7 @@ interface BasicInfoProps {
     date: string;
     time: string;
   };
-  onFormDataChange: (updates: Partial<any>) => void;
+  onFormDataChange: (updates: Partial<{ title: string; type: string; date: string; time: string }>) => void;
 }
 
 const BasicInfo = ({ formData, onFormDataChange }: BasicInfoProps) => {
@@ -34,6 +34,7 @@ const BasicInfo = ({ formData, onFormDataChange }: BasicInfoProps) => {
             id="title"
             placeholder="e.g., Nandi Sunrise Sprint"
             value={formData.title}
+            maxLength={100}
             onChange={(e) => onFormDataChange({title: e.target.value})}
           />
         </div>

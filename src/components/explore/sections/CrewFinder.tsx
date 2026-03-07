@@ -31,7 +31,7 @@ interface CrewIntent {
 interface CrewFinderProps {
   crewIntents: CrewIntent[];
   onJoinCrew?: (crewId: number) => void;
-  onCreateIntent?: (intent: any) => void;
+  onCreateIntent?: (intent: { title: string; description: string; lookingFor: number; rideType: string }) => void;
 }
 
 const CrewFinder = ({ crewIntents, onJoinCrew, onCreateIntent }: CrewFinderProps) => {
@@ -339,9 +339,10 @@ const CrewFinder = ({ crewIntents, onJoinCrew, onCreateIntent }: CrewFinderProps
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img 
-                src={intent.creator.avatar} 
+              <img
+                src={intent.creator.avatar}
                 alt={intent.creator.name}
+                loading="lazy"
                 className="w-6 h-6 rounded-full"
               />
               <span className="text-sm text-gray-600">by {intent.creator.name}</span>

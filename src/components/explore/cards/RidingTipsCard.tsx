@@ -2,25 +2,7 @@ import { Lightbulb, ThumbsUp, Share2, Bookmark } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface RidingTip {
-  id: number;
-  title: string;
-  content: string;
-  author: {
-    name: string;
-    avatar: string;
-    role: string;
-  };
-  category: "safety" | "maintenance" | "technique" | "gear" | "weather";
-  likes: number;
-  saves: number;
-  timeAgo: string;
-  image?: string;
-  videoUrl?: string;
-  isLiked?: boolean;
-  isSaved?: boolean;
-}
+import type { RidingTip } from "@/types/explore";
 
 interface RidingTipsCardProps {
   tip: RidingTip;
@@ -83,7 +65,7 @@ const RidingTipsCard = ({ tip, onLike, onSave, onShare }: RidingTipsCardProps) =
         {/* Image if available */}
         {tip.image && (
           <div className="mb-4 rounded-lg overflow-hidden">
-            <img src={tip.image} alt={tip.title} className="w-full h-auto" />
+            <img src={tip.image} alt={tip.title} loading="lazy" className="w-full h-auto" />
           </div>
         )}
 

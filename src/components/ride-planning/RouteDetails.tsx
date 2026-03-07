@@ -10,7 +10,7 @@ interface RouteDetailsProps {
     destination: string;
     maxRiders: string;
   };
-  onFormDataChange: (updates: Partial<any>) => void;
+  onFormDataChange: (updates: Partial<{ startPoint: string; destination: string; maxRiders: string }>) => void;
 }
 
 const RouteDetails = ({ formData, onFormDataChange }: RouteDetailsProps) => {

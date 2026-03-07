@@ -1,16 +1,7 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-interface RiderSpotlight {
-  id: number;
-  name: string;
-  avatar: string;
-  badge: string;
-  contributions: number;
-  followers: number;
-  bio: string;
-}
+import type { RiderSpotlight } from "@/types/explore";
 
 interface RiderSpotlightCardProps {
   rider: RiderSpotlight;

@@ -2,29 +2,7 @@ import { Star, ThumbsUp, MessageSquare, Share2, ExternalLink } from "lucide-reac
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface GearReview {
-  id: number;
-  productName: string;
-  productImage: string;
-  category: "helmet" | "jacket" | "gloves" | "boots" | "accessories" | "electronics";
-  rating: number;
-  price: string;
-  reviewTitle: string;
-  reviewContent: string;
-  pros: string[];
-  cons: string[];
-  reviewer: {
-    name: string;
-    avatar: string;
-    ridesCompleted: number;
-  };
-  timeAgo: string;
-  likes: number;
-  comments: number;
-  productLink?: string;
-  isLiked?: boolean;
-}
+import type { GearReview } from "@/types/explore";
 
 interface GearReviewCardProps {
   review: GearReview;
@@ -75,9 +53,10 @@ const GearReviewCard = ({
       <div className="flex border-b border-gray-100">
         <div className="w-1/3 p-3">
           <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-            <img 
-              src={review.productImage} 
-              alt={review.productName} 
+            <img
+              src={review.productImage}
+              alt={review.productName}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           </div>

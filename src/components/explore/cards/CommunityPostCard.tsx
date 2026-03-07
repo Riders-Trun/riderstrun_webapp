@@ -18,32 +18,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface CommunityPost {
-  id: number;
-  user: {
-    name: string;
-    avatar: string;
-    badge?: string;
-    isVerified?: boolean;
-  };
-  content: string;
-  image?: string;
-  likes: number;
-  comments: number;
-  shares?: number;
-  timeAgo: string;
-  location?: string;
-  isLiked?: boolean;
-  isBookmarked?: boolean;
-  rideDetails?: {
-    distance: string;
-    duration: string;
-    participants: number;
-    difficulty: "Easy" | "Medium" | "Hard";
-  };
-  tags?: string[];
-}
+import { getDifficultyColor } from "@/lib/rideUtils";
+import type { CommunityPost } from "@/types/explore";
 
 interface CommunityPostCardProps {
   post: CommunityPost;
@@ -80,15 +56,6 @@ const CommunityPostCard = ({
     // Double tap to like (Instagram-style)
     if (!post.isLiked) {
       handleLike();
-    }
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy": return "text-green-600 bg-green-50";
-      case "Medium": return "text-yellow-600 bg-yellow-50";
-      case "Hard": return "text-red-600 bg-red-50";
-      default: return "text-gray-600 bg-gray-50";
     }
   };
 
@@ -130,6 +97,7 @@ const CommunityPostCard = ({
             <img
               src={post.image}
               alt=""
+              loading="lazy"
               className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
             />
           )}
@@ -277,6 +245,7 @@ const CommunityPostCard = ({
           <img
             src={post.image}
             alt="Post content"
+            loading="lazy"
             className={cn(
               "w-full h-64 object-cover transition-all duration-300",
               !imageLoaded && "bg-gray-200 animate-pulse"

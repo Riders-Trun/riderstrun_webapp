@@ -2,22 +2,7 @@ import { MapPin, Users, Calendar, Route } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-interface RideMoment {
-  id: number;
-  rider: {
-    name: string;
-    avatar: string;
-  };
-  image: string;
-  location: string;
-  rideTitle: string;
-  date: string;
-  participantsCount: number;
-  taggedRiders: string[];
-  hasUpcomingRide: boolean;
-  upcomingRideDate?: string;
-}
+import type { RideMoment } from "@/types/explore";
 
 interface RideMomentCardProps {
   moment: RideMoment;
@@ -39,6 +24,7 @@ const RideMomentCard = ({
         <img
           src={moment.image}
           alt={moment.rideTitle}
+          loading="lazy"
           className="w-full h-48 object-cover"
         />
         

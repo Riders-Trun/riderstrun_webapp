@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Clock, Users, Calendar, Star } from "lucide-react";
 import GlobalHeader from "@/components/GlobalHeader";
-import { UPCOMING_RIDES, PAST_RIDES, ORGANIZED_RIDES } from "@/data/rides";
+import { useUpcomingRides, usePastRides, useOrganizedRides } from "@/hooks/useRides";
+import type { MyRide } from "@/types";
 
 const MyRidesScreen = () => {
-  const upcomingRides = UPCOMING_RIDES;
-  const pastRides = PAST_RIDES;
-  const organizedRides = ORGANIZED_RIDES;
+  const { data: upcomingRides = [] } = useUpcomingRides();
+  const { data: pastRides = [] } = usePastRides();
+  const { data: organizedRides = [] } = useOrganizedRides();
 
-  const RideCard = ({ ride, showActions = false, isPast = false }: any) => (
+  const RideCard = ({ ride, showActions = false, isPast = false }: { ride: MyRide; showActions?: boolean; isPast?: boolean }) => (
     <Card className="w-full max-w-full overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start gap-3">

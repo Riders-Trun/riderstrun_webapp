@@ -1,17 +1,7 @@
 import { MapPin, Users, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-interface TrendingRide {
-  id: number;
-  title: string;
-  location: string;
-  participants: number;
-  image: string;
-  difficulty: string;
-  distance: string;
-  rating: number;
-}
+import type { TrendingRide } from "@/types/explore";
 
 interface TrendingRideCardProps {
   ride: TrendingRide;
@@ -31,6 +21,7 @@ const TrendingRideCard = ({
           <img
             src={ride.image}
             alt={ride.title}
+            loading="lazy"
             className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
           />
           <div className="flex-1">
@@ -63,6 +54,7 @@ const TrendingRideCard = ({
         <img
           src={ride.image}
           alt={ride.title}
+          loading="lazy"
           className="w-full h-48 object-cover"
         />
         <div className="absolute top-3 left-3">

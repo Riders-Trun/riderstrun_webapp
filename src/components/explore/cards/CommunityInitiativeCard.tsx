@@ -2,27 +2,7 @@ import { Heart, Users, Calendar, MapPin, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
-interface CommunityInitiative {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  type: "blood-donation" | "safety-workshop" | "women-only" | "meetup" | "charity";
-  organizer: {
-    name: string;
-    avatar: string;
-    organization?: string;
-  };
-  date: string;
-  location: string;
-  participantsCount: number;
-  maxParticipants?: number;
-  registrationDeadline?: string;
-  isRegistered?: boolean;
-  requirements?: string[];
-  impact?: string;
-}
+import type { CommunityInitiative } from "@/types/explore";
 
 interface CommunityInitiativeCardProps {
   initiative: CommunityInitiative;
@@ -107,6 +87,7 @@ const CommunityInitiativeCard = ({
         <img
           src={initiative.image}
           alt={initiative.title}
+          loading="lazy"
           className="w-full h-32 object-cover"
         />
         

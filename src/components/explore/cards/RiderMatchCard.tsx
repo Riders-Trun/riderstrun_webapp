@@ -3,26 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-
-interface RiderMatch {
-  id: number;
-  name: string;
-  avatar: string;
-  location: string;
-  distance: string;
-  bike: string;
-  bikeImage?: string;
-  matchPercentage: number;
-  matchReasons: {
-    reason: string;
-    score: number;
-  }[];
-  ridePreferences: string[];
-  ridesCompleted: number;
-  joinedDate: string;
-  isOnline?: boolean;
-  mutualConnections?: number;
-}
+import type { RiderMatch } from "@/types/explore";
 
 interface RiderMatchCardProps {
   rider: RiderMatch;
@@ -91,7 +72,7 @@ const RiderMatchCard = ({
         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
           <div className="w-12 h-12 bg-white rounded-md flex items-center justify-center">
             {rider.bikeImage ? (
-              <img src={rider.bikeImage} alt="Bike" className="w-10 h-10 object-contain" />
+              <img src={rider.bikeImage} alt="Bike" loading="lazy" className="w-10 h-10 object-contain" />
             ) : (
               <Bike className="w-6 h-6 text-gray-400" />
             )}

@@ -44,6 +44,7 @@
         <img
           src={route.coverImage}
           alt={route.title}
+          loading="lazy"
           className="w-full h-64 object-cover"
         />
         
@@ -284,6 +285,7 @@
                   key={index}
                   src={image}
                   alt={`Gallery ${index + 1}`}
+                  loading="lazy"
                   className="w-full h-32 object-cover rounded-lg"
                 />
               ))}

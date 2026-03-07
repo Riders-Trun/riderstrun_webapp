@@ -2,21 +2,7 @@ import { Calendar, Users, Trophy, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-
-interface CommunityChallenge {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  startDate: string;
-  endDate: string;
-  participants: number;
-  totalTarget: number;
-  currentProgress: number;
-  reward: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  location?: string;
-}
+import type { CommunityChallenge } from "@/types/explore";
 
 interface CommunityChallengeCardProps {
   challenge: CommunityChallenge;
@@ -38,6 +24,7 @@ const CommunityChallengeCard = ({
         <img
           src={challenge.image}
           alt={challenge.title}
+          loading="lazy"
           className="w-full h-32 object-cover"
         />
         <div className="absolute top-3 left-3">

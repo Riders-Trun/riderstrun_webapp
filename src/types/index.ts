@@ -260,6 +260,73 @@ export interface MentorAchievement {
   icon: React.ComponentType;
 }
 
+// ===== Ride Planning Types =====
+
+export interface RideFormData {
+  title: string;
+  type: string;
+  date: string;
+  time: string;
+  startPoint: string;
+  destination: string;
+  maxRiders: string;
+  description: string;
+  role: string;
+  selectedRoute: string;
+}
+
+export interface PresetData {
+  title: string;
+  type: string;
+  time: string;
+  maxRiders: string;
+  description: string;
+  pitStops: string[];
+  rules: string[];
+}
+
+export interface PopularRoute {
+  id: string;
+  name: string;
+  distance: string;
+  difficulty: string;
+  rating: number;
+  timesRidden: number;
+  route: {
+    startPoint: string;
+    destination: string;
+    time: string;
+  };
+  streak: { current: number; target: number; reward: string };
+}
+
+export interface StoryContent {
+  text: string;
+  image?: string;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface NewCrewIntent {
+  title: string;
+  description: string;
+  lookingFor: number;
+  rideType: string;
+  timePreference: string;
+  skillLevel: string;
+  route: string;
+  speed: string;
+  date: string;
+  requirements: string[];
+}
+
+export interface ChatMessageMetadata {
+  imageUrl?: string;
+  location?: { lat: number; lng: number; name: string };
+  rideId?: number;
+  rideTitle?: string;
+}
+
 // ===== Filter Types =====
 
 export interface FilterOptions {

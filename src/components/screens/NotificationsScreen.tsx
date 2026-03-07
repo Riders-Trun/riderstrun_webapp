@@ -90,7 +90,7 @@ const NotificationsScreen = () => {
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-sm text-gray-900">{notification.title}</h3>
                             <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{notification.message}</p>
-                            <span className="text-[10px] text-gray-400 mt-1 block">{notification.time}</span>
+                            <span className="text-xs text-gray-400 mt-1 block">{notification.time}</span>
                           </div>
                           <Button
                             size="sm"
@@ -135,7 +135,7 @@ const NotificationsScreen = () => {
                           <div className="flex-1 min-w-0">
                             <h3 className="font-medium text-sm text-gray-700">{notification.title}</h3>
                             <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notification.message}</p>
-                            <span className="text-[10px] text-gray-400 mt-1 block">{notification.time}</span>
+                            <span className="text-xs text-gray-400 mt-1 block">{notification.time}</span>
                           </div>
                           {notification.action !== "Acknowledged" ? (
                             <Button
@@ -146,7 +146,7 @@ const NotificationsScreen = () => {
                               {notification.action}
                             </Button>
                           ) : (
-                            <span className="text-[10px] text-gray-400 flex-shrink-0 mt-1">Done</span>
+                            <span className="text-xs text-gray-400 flex-shrink-0 mt-1">Done</span>
                           )}
                         </div>
                       </div>

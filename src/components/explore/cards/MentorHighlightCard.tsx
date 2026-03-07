@@ -12,7 +12,7 @@ interface Mentor {
     type: "consistent" | "safety" | "pillion" | "routes";
     label: string;
     value: string | number;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
   }[];
   stats: {
     ridesOrganized: number;

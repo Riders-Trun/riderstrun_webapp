@@ -146,6 +146,7 @@ const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewerProps) 
             <img
               src={currentSlide.url}
               alt="Story"
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           ) : (

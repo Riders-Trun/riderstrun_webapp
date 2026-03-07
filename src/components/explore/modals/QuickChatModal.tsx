@@ -24,7 +24,7 @@ interface Message {
   sender: "me" | "other";
   timestamp: string;
   type: "text" | "image" | "location" | "ride_invite";
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 interface QuickChatModalProps {

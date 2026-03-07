@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Navigation, Clock, Star, Camera, Users, Route, Fuel, Coffee, Mountain, Search, Filter } from "lucide-react";
 import GlobalHeader from "@/components/GlobalHeader";
+import { getDifficultyColor } from "@/lib/rideUtils";
 
 const LocationPlannerScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,15 +64,6 @@ const LocationPlannerScreen = () => {
     { id: "adventure", label: "Adventure", icon: Navigation },
     { id: "heritage", label: "Heritage", icon: Star }
   ];
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy": return "bg-green-100 text-green-800";
-      case "Moderate": return "bg-yellow-100 text-yellow-800";
-      case "Hard": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">

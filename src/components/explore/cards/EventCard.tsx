@@ -2,27 +2,10 @@ import { Calendar, MapPin, Users, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
-interface Event {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  date: string;
-  time: string;
-  location: string;
-  organizer: {
-    name: string;
-    avatar: string;
-  };
-  attendees: number;
-  maxAttendees?: number;
-  type: "Workshop" | "Meetup" | "Training" | "Ride";
-  price?: number;
-}
+import type { RideEvent } from "@/types/explore";
 
 interface EventCardProps {
-  event: Event;
+  event: RideEvent;
   onJoin?: (eventId: number) => void;
   isJoined?: boolean;
 }
@@ -46,6 +29,7 @@ const EventCard = ({ event, onJoin, isJoined = false }: EventCardProps) => {
         <img
           src={event.image}
           alt={event.title}
+          loading="lazy"
           className="w-full h-40 object-cover"
         />
         <div className="absolute top-3 left-3">

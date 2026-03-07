@@ -1,24 +1,7 @@
 import { Map, Star, Clock, Route, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface RideRoute {
-  id: number;
-  name: string;
-  description: string;
-  image: string;
-  distance: string;
-  duration: string;
-  difficulty: "Easy" | "Moderate" | "Challenging" | "Expert";
-  terrain: string[];
-  startPoint: string;
-  endPoint: string;
-  rating: number;
-  reviewCount: number;
-  completions: number;
-  highlights: string[];
-  hasGPXFile?: boolean;
-}
+import type { RideRoute } from "@/types/explore";
 
 interface RideRouteCardProps {
   route: RideRoute;
@@ -51,6 +34,7 @@ const RideRouteCard = ({
         <img
           src={route.image}
           alt={route.name}
+          loading="lazy"
           className="w-full h-40 object-cover"
         />
         <div className="absolute top-3 left-3">

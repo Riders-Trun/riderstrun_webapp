@@ -89,22 +89,22 @@ const ProfileScreen = () => {
         <div className="grid grid-cols-4 gap-2">
           <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
             <div className="text-xl font-bold text-white">{rideStats.totalRides}</div>
-            <div className="text-[10px] text-orange-100 uppercase tracking-wide">Rides</div>
+            <div className="text-xs text-orange-100 uppercase tracking-wide">Rides</div>
           </div>
           <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
             <div className="text-xl font-bold text-white">{rideStats.totalDistance}</div>
-            <div className="text-[10px] text-orange-100 uppercase tracking-wide">Distance</div>
+            <div className="text-xs text-orange-100 uppercase tracking-wide">Distance</div>
           </div>
           <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
             <div className="text-xl font-bold text-white flex items-center justify-center gap-0.5">
               <Flame className="w-4 h-4" />
               {rideStats.currentStreak}
             </div>
-            <div className="text-[10px] text-orange-100 uppercase tracking-wide">Streak</div>
+            <div className="text-xs text-orange-100 uppercase tracking-wide">Streak</div>
           </div>
           <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
             <div className="text-xl font-bold text-white">{rideStats.totalPoints}</div>
-            <div className="text-[10px] text-orange-100 uppercase tracking-wide">Points</div>
+            <div className="text-xs text-orange-100 uppercase tracking-wide">Points</div>
           </div>
         </div>
       </div>
@@ -274,7 +274,7 @@ const ProfileScreen = () => {
                 <div key={index} className="bg-gray-50 rounded-lg p-3">
                   <div className="flex justify-between items-center mb-1.5">
                     <span className="font-medium text-xs">{streak.name}</span>
-                    <span className="text-[10px] text-orange-600 font-semibold bg-orange-50 px-2 py-0.5 rounded-full">{streak.reward}</span>
+                    <span className="text-xs text-orange-600 font-semibold bg-orange-50 px-2 py-0.5 rounded-full">{streak.reward}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1">
                     <div
@@ -283,8 +283,8 @@ const ProfileScreen = () => {
                     />
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[10px] text-gray-500">{streak.current}/{streak.target}</span>
-                    <span className="text-[10px] text-gray-400">{streak.target - streak.current} to go</span>
+                    <span className="text-xs text-gray-500">{streak.current}/{streak.target}</span>
+                    <span className="text-xs text-gray-400">{streak.target - streak.current} to go</span>
                   </div>
                 </div>
               ))}
@@ -305,9 +305,9 @@ const ProfileScreen = () => {
                   <div className="flex justify-between items-start mb-1">
                     <div>
                       <span className="font-medium text-xs block">{challenge.name}</span>
-                      <span className="text-[10px] text-gray-500">{challenge.description}</span>
+                      <span className="text-xs text-gray-500">{challenge.description}</span>
                     </div>
-                    <span className="text-[10px] text-purple-600 font-semibold bg-purple-100 px-2 py-0.5 rounded-full flex-shrink-0 ml-2">{challenge.reward}</span>
+                    <span className="text-xs text-purple-600 font-semibold bg-purple-100 px-2 py-0.5 rounded-full flex-shrink-0 ml-2">{challenge.reward}</span>
                   </div>
                   <div className="w-full bg-white/60 rounded-full h-1.5 mb-1 mt-2">
                     <div
@@ -316,8 +316,8 @@ const ProfileScreen = () => {
                     />
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[10px] text-gray-500">{challenge.progress}/{challenge.target}</span>
-                    <span className="text-[10px] text-red-400">Expires {challenge.expires}</span>
+                    <span className="text-xs text-gray-500">{challenge.progress}/{challenge.target}</span>
+                    <span className="text-xs text-red-400">Expires {challenge.expires}</span>
                   </div>
                 </div>
               ))}
@@ -331,7 +331,7 @@ const ProfileScreen = () => {
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700">
               <Award className="w-4 h-4 text-amber-500" />
               Achievements
-              <span className="text-[10px] text-gray-400 font-normal ml-auto">
+              <span className="text-xs text-gray-400 font-normal ml-auto">
                 {achievements.filter(a => a.earned).length}/{achievements.length} unlocked
               </span>
             </CardTitle>
@@ -353,12 +353,12 @@ const ProfileScreen = () => {
                     <span className="text-lg">{getRarityIcon(achievement.rarity)}</span>
                   </div>
                   <div className="font-medium text-xs truncate">{achievement.name}</div>
-                  <div className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{achievement.description}</div>
-                  <Badge className={`mt-1.5 text-[10px] px-1.5 py-0 ${getRarityColor(achievement.rarity)}`}>
+                  <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">{achievement.description}</div>
+                  <Badge className={`mt-1.5 text-xs px-1.5 py-0 ${getRarityColor(achievement.rarity)}`}>
                     {achievement.rarity}
                   </Badge>
                   {achievement.earned && (
-                    <div className="text-[10px] text-orange-600 font-medium mt-1">+{achievement.points} pts</div>
+                    <div className="text-xs text-orange-600 font-medium mt-1">+{achievement.points} pts</div>
                   )}
                 </div>
               ))}

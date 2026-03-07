@@ -330,6 +330,7 @@ const AllRidersPage = ({
                   <img
                     src={route.thumbnail}
                     alt={route.name}
+                    loading="lazy"
                     className="w-20 h-16 rounded-lg object-cover"
                   />
                   

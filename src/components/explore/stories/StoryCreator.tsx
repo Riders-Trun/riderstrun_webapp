@@ -32,16 +32,31 @@ const StoryCreator = ({ onClose, onPublish }: StoryCreatorProps) => {
     "#96ceb4", "#ffeaa7", "#fab1a0", "#fd79a8", "#6c5ce7"
   ];
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setSelectedImage(e.target?.result as string);
-        setStoryType("image");
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      alert('File too large. Maximum 5MB allowed.');
+      event.target.value = '';
+      return;
     }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setSelectedImage(e.target?.result as string);
+      setStoryType("image");
+    };
+    reader.readAsDataURL(file);
   };
 
   const handlePublish = () => {
@@ -110,6 +125,7 @@ const StoryCreator = ({ onClose, onPublish }: StoryCreatorProps) => {
                 <img
                   src={selectedImage}
                   alt="Selected"
+                  loading="lazy"
                   className="max-w-full max-h-full object-contain rounded-lg"
                 />
               ) : (

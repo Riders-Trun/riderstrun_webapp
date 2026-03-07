@@ -1,12 +1,12 @@
 
-import { useState } from "react";
+import { useState, memo, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Users, Star, Share2, UserPlus, Navigation, Camera, Fuel } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { formatRideDate, getTimeUntilRide, getRideTypeEmoji } from "@/lib/rideUtils";
+import { formatRideDate, getTimeUntilRide, getRideTypeEmoji, getDifficultyColorFromDistance, getDifficultyFromDistance } from "@/lib/rideUtils";
 import { TYPE_GRADIENTS } from "@/constants";
 import type { Ride } from "@/types";
 import "./RideCard.css";
@@ -15,13 +15,20 @@ interface RideCardProps {
   ride: Ride;
 }
 
-const RideCard = ({ ride }: RideCardProps) => {
+const RideCard = memo(({ ride }: RideCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isNavigating, setIsNavigating] = useState(false);
   const rideDate = formatRideDate(ride.date);
   const timeStatus = getTimeUntilRide(ride.date);
   const typeEmoji = getRideTypeEmoji(ride.type);
+
+  // Deterministic pseudo-random values based on ride.id
+  const stableValues = useMemo(() => ({
+    rating: `4.${(ride.id % 4) + 5}`,
+    photos: (ride.id * 7) % 30 + 10,
+    stops: (ride.id % 3) + 1,
+  }), [ride.id]);
   
   // Determine if ride is featured (high joined count or organizer)
   const isFeatured = ride.joinedCount >= 10 || ride.isOrganizer;
@@ -75,20 +82,8 @@ const RideCard = ({ ride }: RideCardProps) => {
     return TYPE_GRADIENTS[type] || "from-gray-500 to-gray-600";
   };
 
-  const getDifficultyColor = (distance: string) => {
-    // Simple logic to determine difficulty based on distance
-    const km = parseInt(distance.replace(/\D/g, ''));
-    if (km < 50) return "bg-green-100 text-green-800";
-    if (km < 100) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
-  };
-
-  const getDifficultyLabel = (distance: string) => {
-    const km = parseInt(distance.replace(/\D/g, ''));
-    if (km < 50) return "Easy";
-    if (km < 100) return "Moderate";
-    return "Hard";
-  };
+  const getDifficultyColor = getDifficultyColorFromDistance;
+  const getDifficultyLabel = getDifficultyFromDistance;
 
   return (
     <Card 
@@ -130,7 +125,7 @@ const RideCard = ({ ride }: RideCardProps) => {
         <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
           <div className="flex items-center gap-1 bg-black/50 text-white px-2 py-1 rounded text-xs">
             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-            <span>4.{Math.floor(Math.random() * 4) + 5}</span>
+            <span>{stableValues.rating}</span>
           </div>
           {ride.joinedCount === ride.maxRiders && (
             <Badge className="bg-red-500 text-white text-xs border-0">
@@ -235,11 +230,11 @@ const RideCard = ({ ride }: RideCardProps) => {
           </div>
           <div className="flex items-center gap-1 text-gray-600">
             <Camera className="w-3 h-3" />
-            <span className="text-xs">{Math.floor(Math.random() * 30) + 10} photos</span>
+            <span className="text-xs">{stableValues.photos} photos</span>
           </div>
           <div className="flex items-center gap-1 text-gray-600">
             <Fuel className="w-3 h-3" />
-            <span className="text-xs">{Math.floor(Math.random() * 3) + 1} stops</span>
+            <span className="text-xs">{stableValues.stops} stops</span>
           </div>
         </div>
 
@@ -295,6 +290,8 @@ const RideCard = ({ ride }: RideCardProps) => {
       </CardContent>
     </Card>
   );
-};
+});
+
+RideCard.displayName = 'RideCard';
 
 export default RideCard;

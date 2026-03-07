@@ -109,6 +109,7 @@ const RiderProfileModal = ({
           <img
             src={rider.coverImage}
             alt="Cover"
+            loading="lazy"
             className="w-full h-32 object-cover"
           />
           <div className="absolute top-4 right-4">
@@ -301,6 +302,7 @@ const RiderProfileModal = ({
                       <img
                         src={ride.image}
                         alt={ride.title}
+                        loading="lazy"
                         className="w-16 h-12 rounded-lg object-cover"
                       />
                       <div className="flex-1">
