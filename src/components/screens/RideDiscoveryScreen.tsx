@@ -42,7 +42,6 @@ const RideDiscoveryScreen = () => {
           title="Route Discovery"
           showBack={true}
           showNotifications={true}
-          notificationCount={3}
         />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
@@ -61,7 +60,6 @@ const RideDiscoveryScreen = () => {
         subtitle="Explore amazing routes"
         showBack={true}
         showNotifications={true}
-        notificationCount={3}
       />
 
       <div className="p-3 space-y-4 pb-20">

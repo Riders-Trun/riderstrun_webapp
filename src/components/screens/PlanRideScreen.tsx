@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { validateRideForm } from "@/lib/validations";
+import { useCreateRide } from "@/hooks/useRides";
 import GlobalHeader from "@/components/GlobalHeader";
 import UserStats from "@/components/ride-planning/UserStats";
 import PopularRoutes from "@/components/ride-planning/PopularRoutes";
@@ -32,6 +33,7 @@ const PlanRideScreen = () => {
   const [rules, setRules] = useState<string[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const createRide = useCreateRide();
 
   // Mock user streak data
   const userStats = {
@@ -160,11 +162,17 @@ const PlanRideScreen = () => {
       return;
     }
     setFormErrors({});
-    console.log("Publishing ride:", { formData: result.data, pitStops, rules });
-    toast({
-      title: "Ride Published!",
-      description: "Your ride has been created successfully.",
-    });
+    createRide.mutate(
+      { ...result.data, pitStops, rules },
+      {
+        onSuccess: () => {
+          toast({ title: "Ride Published!", description: "Your ride has been created successfully." });
+        },
+        onError: (error: Error) => {
+          toast({ title: "Failed to publish", description: error.message, variant: "destructive" });
+        },
+      }
+    );
   };
 
   return (
@@ -175,7 +183,6 @@ const PlanRideScreen = () => {
         subtitle="Create an amazing weekend experience"
         showBack={true}
         showNotifications={true}
-        notificationCount={3}
       />
       
       {/* User Stats */}
@@ -229,11 +236,12 @@ const PlanRideScreen = () => {
           <Button variant="outline" className="flex-1">
             Preview
           </Button>
-          <Button 
-            className="flex-1 bg-orange-500 hover:bg-orange-600" 
+          <Button
+            className="flex-1 bg-orange-500 hover:bg-orange-600"
             onClick={handlePublish}
+            disabled={createRide.isPending}
           >
-            {formData.role === "organizer" ? "Publish as Organizer" : "Publish Ride"}
+            {createRide.isPending ? "Publishing..." : (formData.role === "organizer" ? "Publish as Organizer" : "Publish Ride")}
           </Button>
         </div>
       </div>

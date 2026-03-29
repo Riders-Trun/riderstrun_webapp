@@ -1,24 +1,51 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ridesApi } from "@/services/api";
 import { AVAILABLE_RIDES, UPCOMING_RIDES, PAST_RIDES, ORGANIZED_RIDES } from "@/data/rides";
 import type { Ride, MyRide } from "@/types";
 
-// Simulate API delay for mock data
-const simulateDelay = <T>(data: T, ms = 500): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(data), ms));
+// Flag to switch between mock and real API
+const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
 
-// When backend is ready, replace these fetch functions with real API calls:
-// const fetchRides = () => api.get<Ride[]>("/rides");
+const fetchRides = async (): Promise<Ride[]> => {
+  if (USE_MOCK) return AVAILABLE_RIDES;
+  const res = await ridesApi.list();
+  return (res.data || []) as unknown as Ride[];
+};
 
-const fetchRides = (): Promise<Ride[]> => simulateDelay(AVAILABLE_RIDES);
-const fetchUpcomingRides = (): Promise<MyRide[]> => simulateDelay(UPCOMING_RIDES);
-const fetchPastRides = (): Promise<MyRide[]> => simulateDelay(PAST_RIDES);
-const fetchOrganizedRides = (): Promise<MyRide[]> => simulateDelay(ORGANIZED_RIDES);
+const fetchUpcomingRides = async (): Promise<MyRide[]> => {
+  if (USE_MOCK) return UPCOMING_RIDES;
+  const res = await ridesApi.list({ status: "upcoming", mine: true });
+  return (res.data || []) as unknown as MyRide[];
+};
+
+const fetchPastRides = async (): Promise<MyRide[]> => {
+  if (USE_MOCK) return PAST_RIDES;
+  const res = await ridesApi.list({ status: "past", mine: true });
+  return (res.data || []) as unknown as MyRide[];
+};
+
+const fetchOrganizedRides = async (): Promise<MyRide[]> => {
+  if (USE_MOCK) return ORGANIZED_RIDES;
+  const res = await ridesApi.list({ status: "organized", mine: true });
+  return (res.data || []) as unknown as MyRide[];
+};
 
 export const useRides = () =>
   useQuery({
     queryKey: ["rides"],
     queryFn: fetchRides,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const useRideById = (id: string) =>
+  useQuery({
+    queryKey: ["rides", id],
+    queryFn: async () => {
+      if (USE_MOCK) return null;
+      const res = await ridesApi.getById(id);
+      return res.data;
+    },
+    enabled: !!id && !USE_MOCK,
   });
 
 export const useUpcomingRides = () =>
@@ -41,3 +68,23 @@ export const useOrganizedRides = () =>
     queryFn: fetchOrganizedRides,
     staleTime: 5 * 60 * 1000,
   });
+
+export const useCreateRide = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) => ridesApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rides"] });
+    },
+  });
+};
+
+export const useJoinRide = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (rideId: string) => ridesApi.join(rideId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rides"] });
+    },
+  });
+};

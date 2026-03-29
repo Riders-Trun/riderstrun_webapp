@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { useSimulatedLoading } from "@/hooks/useLoading";
 import RideDetailsSkeleton from "./RideDetailsSkeleton";
 import PreviousTripsSection from "@/components/ride-details/PreviousTripsSection";
 import { mockRideDetails } from "@/data/rideDetails";
+import { useRideById } from "@/hooks/useRides";
 import {
   MapPin, Clock, Users, Shield, Phone, CheckCircle, AlertTriangle,
   Star, MessageCircle, Cloud, Thermometer, Route, TrendingUp,
@@ -16,11 +18,15 @@ import {
 } from "lucide-react";
 
 const RideDetailsScreen = () => {
-  const { isLoading } = useSimulatedLoading(1200);
+  const { id } = useParams<{ id: string }>();
+  const { isLoading: simulatedLoading } = useSimulatedLoading(1200);
+  const { data: apiRide, isLoading: apiLoading } = useRideById(id ?? "");
   const [isJoined, setIsJoined] = useState(false);
   const [showAllPreviousTrips, setShowAllPreviousTrips] = useState(false);
 
-  const ride = mockRideDetails;
+  // Use API data when available, otherwise fall back to mock
+  const ride = (apiRide as typeof mockRideDetails | null) ?? mockRideDetails;
+  const isLoading = simulatedLoading || apiLoading;
   const averageRating =
     ride.reviews.reduce((sum, review) => sum + review.rating, 0) /
     ride.reviews.length;
@@ -37,7 +43,6 @@ const RideDetailsScreen = () => {
           title="Ride Details"
           showBack={true}
           showNotifications={true}
-          notificationCount={3}
         />
 
         <div className="p-3 space-y-3 pb-20">

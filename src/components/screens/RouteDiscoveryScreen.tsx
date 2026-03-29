@@ -76,7 +76,6 @@ const RouteDiscoveryScreen = () => {
         showNotifications={true}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
-        notificationCount={3}
       />
 
       <div className="p-3 space-y-4">

@@ -90,7 +90,6 @@ const MyRidesScreen = () => {
         subtitle="Track your riding adventures"
         showBack={true}
         showNotifications={true}
-        notificationCount={3}
       />
 
       <div className="p-3">

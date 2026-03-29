@@ -72,7 +72,6 @@ const TravelDiaryScreen = () => {
         subtitle="Your riding adventures"
         showBack={true}
         showNotifications={true}
-        notificationCount={3}
       />
       
       {/* New Entry Button */}

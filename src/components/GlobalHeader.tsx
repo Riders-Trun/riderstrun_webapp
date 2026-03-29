@@ -1,4 +1,5 @@
-import { ArrowLeft, Search, Bell, Filter, MapPin, ChevronDown, Menu } from "lucide-react";
+import { ArrowLeft, Search, Bell, Filter, MapPin, Menu } from "lucide-react";
+import { MOCK_NOTIFICATIONS } from "@/data/notifications";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,12 +47,15 @@ const GlobalHeader = ({
   onLocationChange,
   onFilterClick,
   filterCount = 0,
-  notificationCount = 0,
+  notificationCount,
   customBackAction,
   subtitle = "Your Ride Partner"
 }: GlobalHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const unreadCount = notificationCount !== undefined
+    ? notificationCount
+    : MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length;
   const [isCustomLocation, setIsCustomLocation] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
 
@@ -173,9 +177,9 @@ const GlobalHeader = ({
               className="relative text-white hover:bg-white/20 p-2 rounded-lg border border-white/20 hover:border-white/40 transition-colors"
             >
               <Bell className="w-4 h-4" />
-              {notificationCount > 0 && (
+              {unreadCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 bg-red-500 text-white text-xs flex items-center justify-center rounded-full">
-                  {notificationCount > 9 ? '9+' : notificationCount}
+                  {unreadCount > 9 ? '9+' : unreadCount}
                 </Badge>
               )}
             </Button>

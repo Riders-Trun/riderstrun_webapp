@@ -1,5 +1,5 @@
 
-import { useState, memo, useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,17 +18,16 @@ interface RideCardProps {
 const RideCard = memo(({ ride }: RideCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isNavigating, setIsNavigating] = useState(false);
   const rideDate = formatRideDate(ride.date);
   const timeStatus = getTimeUntilRide(ride.date);
   const typeEmoji = getRideTypeEmoji(ride.type);
 
-  // Deterministic pseudo-random values based on ride.id
+  // Use real rating when available; fall back to a deterministic placeholder
   const stableValues = useMemo(() => ({
-    rating: `4.${(ride.id % 4) + 5}`,
+    rating: ride.rating ? ride.rating.toFixed(1) : `4.${(ride.id % 4) + 5}`,
     photos: (ride.id * 7) % 30 + 10,
     stops: (ride.id % 3) + 1,
-  }), [ride.id]);
+  }), [ride.id, ride.rating]);
   
   // Determine if ride is featured (high joined count or organizer)
   const isFeatured = ride.joinedCount >= 10 || ride.isOrganizer;
@@ -71,11 +70,7 @@ const RideCard = memo(({ ride }: RideCardProps) => {
   };
 
   const handleCardClick = () => {
-    setIsNavigating(true);
-    // Add a small delay to show the click feedback
-    setTimeout(() => {
-      navigate(`/ride/${ride.id}`);
-    }, 150);
+    navigate(`/ride/${ride.id}`);
   };
 
   const getTypeGradient = (type: string) => {
@@ -86,20 +81,10 @@ const RideCard = memo(({ ride }: RideCardProps) => {
   const getDifficultyLabel = getDifficultyFromDistance;
 
   return (
-    <Card 
-      className={`w-full max-w-full overflow-hidden premium-card card-hover-transform border-0 shadow-lg bg-white backdrop-blur-sm group cursor-pointer transition-opacity duration-200 ${rideDate.isToday ? 'urgent-ride' : ''} ${isNavigating ? 'opacity-75' : ''}`}
+    <Card
+      className={`w-full max-w-full overflow-hidden premium-card card-hover-transform border-0 shadow-lg bg-white backdrop-blur-sm group cursor-pointer transition-opacity duration-200 ${rideDate.isToday ? 'urgent-ride' : ''}`}
       onClick={handleCardClick}
     >
-      {/* Loading overlay */}
-      {isNavigating && (
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-10 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-            <span className="text-sm text-gray-600 font-medium">Loading ride details...</span>
-          </div>
-        </div>
-      )}
-      
       {/* Premium Header with Gradient */}
       <div className={`relative h-32 bg-gradient-to-r ${getTypeGradient(ride.type)} transition-all duration-500`}>
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300" />
@@ -212,10 +197,11 @@ const RideCard = memo(({ ride }: RideCardProps) => {
               </div>
             </div>
           </div>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             variant="outline"
             onClick={handleShare}
+            aria-label="Share ride"
             className="hover:bg-gray-50 hover:scale-105 transition-all duration-200"
           >
             <Share2 className="w-3 h-3" />

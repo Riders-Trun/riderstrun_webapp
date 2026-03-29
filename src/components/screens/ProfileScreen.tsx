@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { profileApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +22,22 @@ const ProfileScreen = () => {
   const recentRides = RECENT_RIDES;
   const challenges = CHALLENGES;
 
-  const handleSave = () => {
+  const { toast } = useToast();
+
+  const handleSave = async () => {
+    try {
+      await profileApi.updateProfile({
+        full_name: profile.name,
+        phone: profile.phone,
+        email: profile.email,
+        bike: profile.bike,
+        riding_level: profile.ridingLevel,
+        location: profile.location,
+      });
+      toast({ title: "Profile updated!", description: "Your changes have been saved." });
+    } catch {
+      toast({ title: "Failed to save", description: "Could not update profile.", variant: "destructive" });
+    }
     setIsEditing(false);
   };
 
@@ -50,7 +67,6 @@ const ProfileScreen = () => {
         subtitle="Manage your rider profile"
         showBack={true}
         showNotifications={true}
-        notificationCount={3}
       />
 
       {/* Hero Profile Section */}

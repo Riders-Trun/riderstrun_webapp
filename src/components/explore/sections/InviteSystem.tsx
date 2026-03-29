@@ -24,18 +24,18 @@ const InviteSystem = ({
 }: InviteSystemProps) => {
   const [copied, setCopied] = useState(false);
 
+  const inviteLink = `${window.location.origin}/invite/${userInviteCode}`;
+  const inviteMessage = `🏍️ Join me on RidersTurn!\n\nDiscover amazing rides, connect with fellow riders, and explore new routes together.\n\nUse my invite code: ${userInviteCode}\n\nJoin here: ${inviteLink}`;
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(`Join Weekend Wheels Unite with my invite code: ${userInviteCode}\nDownload the app: https://weekendwheels.app/invite/${userInviteCode}`);
+      await navigator.clipboard.writeText(`Join RidersTurn with my invite code: ${userInviteCode}\n${inviteLink}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
   };
-
-  const inviteLink = `https://weekendwheels.app/invite/${userInviteCode}`;
-  const inviteMessage = `🏍️ Join me on Weekend Wheels Unite!\n\nDiscover amazing rides, connect with fellow riders, and explore new routes together.\n\nUse my invite code: ${userInviteCode}\n\nDownload: ${inviteLink}`;
 
   const shareOptions = [
     { 

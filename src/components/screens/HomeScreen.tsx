@@ -35,11 +35,13 @@ const HomeScreen = () => {
       ride.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ride.tripCode?.toLowerCase().includes(searchQuery.toLowerCase());
 
+    const rideMinCC = ride.minimumCC ? parseInt(ride.minimumCC) : 0;
     const matchesCC = filters.bikeCC === "any" ||
-      (filters.bikeCC === "100-150" && ride.brand?.includes("Honda")) ||
-      (filters.bikeCC === "150-250" && ride.brand?.includes("Bajaj")) ||
-      (filters.bikeCC === "250-500" && (ride.brand?.includes("Royal Enfield") || ride.brand?.includes("Kawasaki"))) ||
-      (filters.bikeCC === "500+" && ride.brand?.includes("Yamaha"));
+      !ride.minimumCC ||
+      (filters.bikeCC === "100-150" && rideMinCC >= 100 && rideMinCC < 150) ||
+      (filters.bikeCC === "150-250" && rideMinCC >= 150 && rideMinCC < 250) ||
+      (filters.bikeCC === "250-500" && rideMinCC >= 250 && rideMinCC < 500) ||
+      (filters.bikeCC === "500+" && rideMinCC >= 500);
 
     const matchesGroupSize = ride.joinedCount >= filters.groupSize[0] && ride.joinedCount <= filters.groupSize[1];
 
@@ -87,7 +89,6 @@ const HomeScreen = () => {
           onLocationChange={setSearchLocation}
           onFilterClick={() => setIsFilterOpen(true)}
           filterCount={activeFiltersCount}
-          notificationCount={3}
         />
 
         <DrawableFilters

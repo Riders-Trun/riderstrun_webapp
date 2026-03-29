@@ -113,9 +113,9 @@ const RideChat = ({ rideId, isOrganizer = false, currentUser }: RideChatProps) =
               placeholder="Type your message..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             />
-            <Button size="sm" onClick={() => handleSendMessage()}>
+            <Button size="sm" onClick={() => handleSendMessage()} aria-label="Send message">
               <Send className="w-4 h-4" />
             </Button>
           </div>
