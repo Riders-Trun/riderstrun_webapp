@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const useLoading = (initialLoading = false) => {
   const [isLoading, setIsLoading] = useState(initialLoading);
@@ -28,14 +28,22 @@ export const useSimulatedLoading = (duration = 2000, initialLoading = true) => {
 // Hook for page transitions with loading states
 export const usePageLoading = () => {
   const [isPageLoading, setIsPageLoading] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const startPageLoading = () => {
+  const startPageLoading = useCallback(() => {
     setIsPageLoading(true);
-    // Simulate network delay
-    setTimeout(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
       setIsPageLoading(false);
+      timerRef.current = null;
     }, 800);
-  };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   return { isPageLoading, startPageLoading, setIsPageLoading };
 };

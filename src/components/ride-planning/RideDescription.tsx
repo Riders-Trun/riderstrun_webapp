@@ -20,9 +20,11 @@ const RideDescription = ({ description, onDescriptionChange }: RideDescriptionPr
           id="description"
           placeholder="Tell riders what to expect, what to bring, or any special instructions..."
           value={description}
+          maxLength={500}
           onChange={(e) => onDescriptionChange(e.target.value)}
           rows={4}
         />
+        <p className="text-xs text-gray-400 mt-1">{description.length}/500</p>
       </CardContent>
     </Card>
   );

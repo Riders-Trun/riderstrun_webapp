@@ -7,6 +7,7 @@ import GlobalHeader from "@/components/GlobalHeader";
 import { QrCode, Hash, ArrowLeft, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { SUGGESTED_TRIP_CODES } from "@/constants";
 
 const JoinRideScreen = () => {
   const [tripCode, setTripCode] = useState("");
@@ -14,33 +15,32 @@ const JoinRideScreen = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleJoinRide = async () => {
-    if (tripCode.trim()) {
-      setIsLoading(true);
+  const handleJoinRideWithCode = async (code: string) => {
+    if (!code.trim()) return;
+    setIsLoading(true);
+    toast({
+      title: "🔍 Searching for ride...",
+      description: `Looking for ride with code: ${code}`
+    });
+    // Simulate API call — replace setTimeout with real ridesApi lookup when available
+    setTimeout(() => {
       toast({
-        title: "🔍 Searching for ride...",
-        description: `Looking for ride with code: ${tripCode}`
+        title: "🎉 Ride Found!",
+        description: "Redirecting to ride details..."
       });
-      
-      // Simulate API call with better UX
-      setTimeout(() => {
-        toast({
-          title: "🎉 Ride Found!",
-          description: "Redirecting to ride details..."
-        });
-        setIsLoading(false);
-        navigate(`/ride/1`);
-      }, 1500);
-    }
+      setIsLoading(false);
+      navigate(`/ride/${code}`);
+    }, 1500);
   };
+
+  const handleJoinRide = () => handleJoinRideWithCode(tripCode);
 
   const handleQuickCode = (code: string) => {
     setTripCode(code);
-    // Auto-submit after selection for better UX
-    setTimeout(() => handleJoinRide(), 300);
+    handleJoinRideWithCode(code);
   };
 
-  const suggestedCodes = ["NH001", "CT002", "CH003", "WM004", "MC005"];
+  const suggestedCodes = [...SUGGESTED_TRIP_CODES];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -50,7 +50,6 @@ const JoinRideScreen = () => {
         subtitle="Enter trip code to join"
         showBack={true}
         showNotifications={true}
-        notificationCount={3}
       />
 
       <div className="p-4 sm:p-6">

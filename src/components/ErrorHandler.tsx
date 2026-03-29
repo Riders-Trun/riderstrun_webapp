@@ -64,7 +64,7 @@ export const ErrorFallback = ({ error, resetError }: { error: Error; resetError:
             Go Home
           </Button>
         </div>
-        {process.env.NODE_ENV === 'development' && (
+        {import.meta.env.DEV && (
           <details className="mt-4 text-left">
             <summary className="text-sm text-gray-500 cursor-pointer">Error Details</summary>
             <pre className="text-xs text-red-600 mt-2 bg-red-50 p-2 rounded overflow-auto">

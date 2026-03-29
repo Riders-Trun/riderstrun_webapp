@@ -2,6 +2,7 @@
 import { Route, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getDifficultyColor } from "@/lib/rideUtils";
 
 interface PopularRoute {
   id: string;
@@ -25,15 +26,6 @@ interface PopularRoutesProps {
 }
 
 const PopularRoutes = ({ routes, selectedRoute, onRouteSelect }: PopularRoutesProps) => {
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy": return "bg-green-100 text-green-800";
-      case "Moderate": return "bg-yellow-100 text-yellow-800";
-      case "Hard": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
   return (
     <Card>
       <CardHeader>

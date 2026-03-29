@@ -23,7 +23,7 @@ const NotFound = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 mx-auto max-w-md relative overflow-hidden mobile-app-container">
+    <div className="min-h-screen bg-gray-50">
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
           <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6">

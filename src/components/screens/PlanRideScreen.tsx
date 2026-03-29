@@ -1,6 +1,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { validateRideForm } from "@/lib/validations";
+import { useCreateRide } from "@/hooks/useRides";
 import GlobalHeader from "@/components/GlobalHeader";
 import UserStats from "@/components/ride-planning/UserStats";
 import PopularRoutes from "@/components/ride-planning/PopularRoutes";
@@ -28,6 +31,9 @@ const PlanRideScreen = () => {
 
   const [pitStops, setPitStops] = useState<string[]>([]);
   const [rules, setRules] = useState<string[]>([]);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+  const createRide = useCreateRide();
 
   // Mock user streak data
   const userStats = {
@@ -97,7 +103,7 @@ const PlanRideScreen = () => {
     }
   ];
 
-  const handlePresetSelect = (preset: any) => {
+  const handlePresetSelect = (preset: { title: string; type: string; time: string; maxRiders: string; description: string; pitStops: string[]; rules: string[] }) => {
     setFormData({
       ...formData,
       title: preset.title,
@@ -110,7 +116,7 @@ const PlanRideScreen = () => {
     setRules(preset.rules);
   };
 
-  const handleRouteSelect = (route: any) => {
+  const handleRouteSelect = (route: { id: string; name: string; distance: string; difficulty: string; route: { startPoint: string; destination: string; time: string } }) => {
     setFormData({
       ...formData,
       selectedRoute: route.id,
@@ -144,7 +150,29 @@ const PlanRideScreen = () => {
   };
 
   const handlePublish = () => {
-    console.log("Publishing ride:", { formData, pitStops, rules });
+    const result = validateRideForm(formData);
+    if (!result.success) {
+      setFormErrors(result.errors);
+      const firstError = Object.values(result.errors)[0];
+      toast({
+        title: "Validation Error",
+        description: firstError,
+        variant: "destructive",
+      });
+      return;
+    }
+    setFormErrors({});
+    createRide.mutate(
+      { ...result.data, pitStops, rules },
+      {
+        onSuccess: () => {
+          toast({ title: "Ride Published!", description: "Your ride has been created successfully." });
+        },
+        onError: (error: Error) => {
+          toast({ title: "Failed to publish", description: error.message, variant: "destructive" });
+        },
+      }
+    );
   };
 
   return (
@@ -155,7 +183,6 @@ const PlanRideScreen = () => {
         subtitle="Create an amazing weekend experience"
         showBack={true}
         showNotifications={true}
-        notificationCount={3}
       />
       
       {/* User Stats */}
@@ -209,11 +236,12 @@ const PlanRideScreen = () => {
           <Button variant="outline" className="flex-1">
             Preview
           </Button>
-          <Button 
-            className="flex-1 bg-orange-500 hover:bg-orange-600" 
+          <Button
+            className="flex-1 bg-orange-500 hover:bg-orange-600"
             onClick={handlePublish}
+            disabled={createRide.isPending}
           >
-            {formData.role === "organizer" ? "Publish as Organizer" : "Publish Ride"}
+            {createRide.isPending ? "Publishing..." : (formData.role === "organizer" ? "Publish as Organizer" : "Publish Ride")}
           </Button>
         </div>
       </div>

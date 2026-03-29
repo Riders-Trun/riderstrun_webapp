@@ -70,7 +70,7 @@ const DrawableFilters = ({
     { value: "beginner", label: "Beginner", emoji: "🔰" }
   ];
 
-  const updateFilter = (key: keyof FilterOptions, value: any) => {
+  const updateFilter = (key: keyof FilterOptions, value: FilterOptions[keyof FilterOptions]) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 

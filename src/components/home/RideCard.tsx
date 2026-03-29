@@ -1,47 +1,33 @@
 
-import { useState } from "react";
+import { memo, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Users, Star, Share2, UserPlus, Navigation, Camera, Fuel } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { formatRideDate, getTimeUntilRide, getRideTypeEmoji } from "@/lib/rideUtils";
+import { formatRideDate, getTimeUntilRide, getRideTypeEmoji, getDifficultyColorFromDistance, getDifficultyFromDistance } from "@/lib/rideUtils";
+import { TYPE_GRADIENTS } from "@/constants";
+import type { Ride } from "@/types";
 import "./RideCard.css";
-
-interface Ride {
-  id: number;
-  title: string;
-  date: string;
-  distance: string;
-  organizer: string;
-  location: string;
-  type: string;
-  joinedCount: number;
-  maxRiders: number;
-  isOrganizer: boolean;
-  distanceFromUser: string;
-  pillionAvailable?: boolean;
-  pillionSlots?: number;
-  tripCode?: string;
-  brand?: string;
-  rating?: number;
-  totalRatings?: number;
-  estimatedCost?: string;
-  highlights?: string[];
-}
 
 interface RideCardProps {
   ride: Ride;
 }
 
-const RideCard = ({ ride }: RideCardProps) => {
+const RideCard = memo(({ ride }: RideCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isNavigating, setIsNavigating] = useState(false);
   const rideDate = formatRideDate(ride.date);
   const timeStatus = getTimeUntilRide(ride.date);
   const typeEmoji = getRideTypeEmoji(ride.type);
+
+  // Use real rating when available; fall back to a deterministic placeholder
+  const stableValues = useMemo(() => ({
+    rating: ride.rating ? ride.rating.toFixed(1) : `4.${(ride.id % 4) + 5}`,
+    photos: (ride.id * 7) % 30 + 10,
+    stops: (ride.id % 3) + 1,
+  }), [ride.id, ride.rating]);
   
   // Determine if ride is featured (high joined count or organizer)
   const isFeatured = ride.joinedCount >= 10 || ride.isOrganizer;
@@ -84,54 +70,21 @@ const RideCard = ({ ride }: RideCardProps) => {
   };
 
   const handleCardClick = () => {
-    setIsNavigating(true);
-    // Add a small delay to show the click feedback
-    setTimeout(() => {
-      navigate(`/ride/${ride.id}`);
-    }, 150);
+    navigate(`/ride/${ride.id}`);
   };
 
   const getTypeGradient = (type: string) => {
-    const gradients = {
-      "Breakfast": "from-orange-500 to-red-500",
-      "Adventure": "from-green-500 to-emerald-600",
-      "Scenic": "from-blue-500 to-cyan-600",
-      "Long Distance": "from-purple-500 to-pink-600",
-      "Night Ride": "from-indigo-500 to-purple-600"
-    };
-    return gradients[type as keyof typeof gradients] || "from-gray-500 to-gray-600";
+    return TYPE_GRADIENTS[type] || "from-gray-500 to-gray-600";
   };
 
-  const getDifficultyColor = (distance: string) => {
-    // Simple logic to determine difficulty based on distance
-    const km = parseInt(distance.replace(/\D/g, ''));
-    if (km < 50) return "bg-green-100 text-green-800";
-    if (km < 100) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
-  };
-
-  const getDifficultyLabel = (distance: string) => {
-    const km = parseInt(distance.replace(/\D/g, ''));
-    if (km < 50) return "Easy";
-    if (km < 100) return "Moderate";
-    return "Hard";
-  };
+  const getDifficultyColor = getDifficultyColorFromDistance;
+  const getDifficultyLabel = getDifficultyFromDistance;
 
   return (
-    <Card 
-      className={`w-full max-w-full overflow-hidden premium-card card-hover-transform border-0 shadow-lg bg-white backdrop-blur-sm group cursor-pointer transition-opacity duration-200 ${rideDate.isToday ? 'urgent-ride' : ''} ${isNavigating ? 'opacity-75' : ''}`}
+    <Card
+      className={`w-full max-w-full overflow-hidden premium-card card-hover-transform border-0 shadow-lg bg-white backdrop-blur-sm group cursor-pointer transition-opacity duration-200 ${rideDate.isToday ? 'urgent-ride' : ''}`}
       onClick={handleCardClick}
     >
-      {/* Loading overlay */}
-      {isNavigating && (
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-10 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-            <span className="text-sm text-gray-600 font-medium">Loading ride details...</span>
-          </div>
-        </div>
-      )}
-      
       {/* Premium Header with Gradient */}
       <div className={`relative h-32 bg-gradient-to-r ${getTypeGradient(ride.type)} transition-all duration-500`}>
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300" />
@@ -157,7 +110,7 @@ const RideCard = ({ ride }: RideCardProps) => {
         <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
           <div className="flex items-center gap-1 bg-black/50 text-white px-2 py-1 rounded text-xs">
             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-            <span>4.{Math.floor(Math.random() * 4) + 5}</span>
+            <span>{stableValues.rating}</span>
           </div>
           {ride.joinedCount === ride.maxRiders && (
             <Badge className="bg-red-500 text-white text-xs border-0">
@@ -244,10 +197,11 @@ const RideCard = ({ ride }: RideCardProps) => {
               </div>
             </div>
           </div>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             variant="outline"
             onClick={handleShare}
+            aria-label="Share ride"
             className="hover:bg-gray-50 hover:scale-105 transition-all duration-200"
           >
             <Share2 className="w-3 h-3" />
@@ -262,11 +216,11 @@ const RideCard = ({ ride }: RideCardProps) => {
           </div>
           <div className="flex items-center gap-1 text-gray-600">
             <Camera className="w-3 h-3" />
-            <span className="text-xs">{Math.floor(Math.random() * 30) + 10} photos</span>
+            <span className="text-xs">{stableValues.photos} photos</span>
           </div>
           <div className="flex items-center gap-1 text-gray-600">
             <Fuel className="w-3 h-3" />
-            <span className="text-xs">{Math.floor(Math.random() * 3) + 1} stops</span>
+            <span className="text-xs">{stableValues.stops} stops</span>
           </div>
         </div>
 
@@ -322,6 +276,8 @@ const RideCard = ({ ride }: RideCardProps) => {
       </CardContent>
     </Card>
   );
-};
+});
+
+RideCard.displayName = 'RideCard';
 
 export default RideCard;
