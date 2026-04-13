@@ -216,7 +216,7 @@ export const healthApi = {
   dependencies: () =>
     request<ApiResponse<Record<string, unknown>>>("/api/health/dependencies", { skipAuth: true }),
   metrics: () =>
-    request<ApiResponse<Record<string, unknown>>>("/api/metrics"),
+    request<ApiResponse<Record<string, unknown>>>("/api/admin/metrics"),
 };
 
 // Generic API (backward compat)

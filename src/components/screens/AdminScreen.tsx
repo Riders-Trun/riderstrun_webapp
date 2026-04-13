@@ -28,11 +28,11 @@ import { healthApi, api } from "@/services/api";
 // Admin API calls
 const adminApi = {
   getUsers: () =>
-    api.get<{ status: string; data: AdminUser[] }>("/api/admin/users"),
+    api.get<{ status: string; data: { users: AdminUser[]; meta: { total: number; limit: number; offset: number } } }>("/api/admin/users"),
   getRides: () =>
     api.get<{ status: string; data: AdminRide[] }>("/api/admin/rides"),
   getStats: () =>
-    api.get<{ status: string; data: DashboardStats }>("/api/admin/stats"),
+    api.get<{ status: string; data: { stats: DashboardStats } }>("/api/admin/stats"),
   toggleUserBlock: (userId: number, block: boolean) =>
     api.post<{ status: string }>(`/api/admin/users/${userId}/${block ? "block" : "unblock"}`, {}),
   updateRideStatus: (rideId: string, status: string) =>
@@ -178,7 +178,7 @@ const DashboardTab = () => {
     retry: false,
   });
 
-  const stats = statsRes?.data;
+  const stats = statsRes?.data?.stats;
 
   const statCards = [
     { label: "Total Users", value: stats?.totalUsers ?? "—", icon: Users, color: "text-blue-500", bg: "bg-blue-50" },
@@ -258,7 +258,7 @@ const UsersTab = ({ search, onSearchChange }: { search: string; onSearchChange: 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "users"] }),
   });
 
-  const users = usersRes?.data || [];
+  const users = usersRes?.data?.users || [];
   const filteredUsers = users.filter(
     (u) =>
       !search ||
