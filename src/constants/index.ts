@@ -1,3 +1,5 @@
+import type { FilterOptions } from "@/types";
+
 export const RIDE_TYPES = [
   "All",
   "Breakfast",
@@ -28,14 +30,14 @@ export const SUGGESTED_TRIP_CODES = [
   "MC005",
 ] as const;
 
-export const DEFAULT_FILTERS = {
+export const DEFAULT_FILTERS: FilterOptions = {
   range: [0, 100],
   sortBy: "nearest",
   bikeCC: "any",
   groupSize: [1, 20],
   duration: "any",
   rideType: [],
-} as const;
+};
 
 export const TYPE_GRADIENTS: Record<string, string> = {
   Breakfast: "from-orange-500 to-red-500",

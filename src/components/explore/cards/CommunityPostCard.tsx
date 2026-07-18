@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { 
-  SwipeUp, 
-  Heart, 
+import {
+  Heart,
   MessageCircle, 
   Share2, 
   Bookmark,

@@ -17,6 +17,7 @@ export const AVAILABLE_RIDES: Ride[] = [
     pillionSlots: 3,
     tripCode: "NH001",
     brand: "Royal Enfield",
+    minimumCC: "350",
   },
   {
     id: 2,
@@ -34,6 +35,7 @@ export const AVAILABLE_RIDES: Ride[] = [
     pillionSlots: 2,
     tripCode: "CT002",
     brand: "Kawasaki",
+    minimumCC: "250",
   },
   {
     id: 3,
@@ -50,6 +52,7 @@ export const AVAILABLE_RIDES: Ride[] = [
     pillionAvailable: false,
     tripCode: "CH003",
     brand: "Honda",
+    minimumCC: "250",
   },
   {
     id: 4,
@@ -67,6 +70,7 @@ export const AVAILABLE_RIDES: Ride[] = [
     pillionSlots: 4,
     tripCode: "WM004",
     brand: "Bajaj",
+    minimumCC: "150",
   },
   {
     id: 5,
@@ -84,6 +88,7 @@ export const AVAILABLE_RIDES: Ride[] = [
     pillionSlots: 6,
     tripCode: "MC005",
     brand: "Yamaha",
+    minimumCC: "150",
   },
 ];
 

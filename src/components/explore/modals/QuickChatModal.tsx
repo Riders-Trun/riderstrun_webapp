@@ -24,7 +24,7 @@ interface Message {
   sender: "me" | "other";
   timestamp: string;
   type: "text" | "image" | "location" | "ride_invite";
-  metadata?: Record<string, unknown>;
+  metadata?: { rideName?: string; date?: string; time?: string; distance?: string };
 }
 
 interface QuickChatModalProps {
@@ -238,7 +238,7 @@ const QuickChatModal = ({
                   : "bg-gray-100 text-gray-900"
               )}
             >
-              {msg.type === "ride_invite" ? (
+              {msg.type === "ride_invite" && msg.metadata ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />

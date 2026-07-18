@@ -37,7 +37,6 @@ const HomeScreen = () => {
 
     const rideMinCC = ride.minimumCC ? parseInt(ride.minimumCC) : 0;
     const matchesCC = filters.bikeCC === "any" ||
-      !ride.minimumCC ||
       (filters.bikeCC === "100-150" && rideMinCC >= 100 && rideMinCC < 150) ||
       (filters.bikeCC === "150-250" && rideMinCC >= 150 && rideMinCC < 250) ||
       (filters.bikeCC === "250-500" && rideMinCC >= 250 && rideMinCC < 500) ||

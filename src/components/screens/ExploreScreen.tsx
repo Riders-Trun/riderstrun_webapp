@@ -24,6 +24,7 @@ import InviteSystem from "@/components/explore/sections/InviteSystem";
 import StoryViewer from "@/components/explore/stories/StoryViewer";
 import StoryCreator from "@/components/explore/stories/StoryCreator";
 import { NEARBY_RIDERS, CREW_INTENTS, MENTORS } from "@/data/explore";
+import type { StoryContent } from "@/types";
 
 // Mock data for ride moments
 const rideMoments = [
@@ -154,7 +155,7 @@ const ExploreScreen = () => {
     setShowStoryCreator(true);
   };
 
-  const handlePublishStory = (storyContent: { text: string; image?: string; backgroundColor?: string; textColor?: string }) => {
+  const handlePublishStory = (storyContent: StoryContent) => {
     console.log("Publishing story:", storyContent);
   };
 

@@ -4,18 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import type { StoryContent } from "@/types";
 
 interface StoryCreatorProps {
   onClose: () => void;
   onPublish: (story: StoryContent) => void;
-}
-
-interface StoryContent {
-  type: "image" | "text";
-  content: string;
-  caption?: string;
-  backgroundColor?: string;
-  textColor?: string;
 }
 
 const StoryCreator = ({ onClose, onPublish }: StoryCreatorProps) => {

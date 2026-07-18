@@ -20,6 +20,7 @@ export interface Ride {
   totalRatings?: number;
   estimatedCost?: string;
   highlights?: string[];
+  minimumCC?: string;
 }
 
 export interface RideDetail extends Ride {
@@ -301,8 +302,9 @@ export interface PopularRoute {
 }
 
 export interface StoryContent {
-  text: string;
-  image?: string;
+  type: "image" | "text";
+  content: string;
+  caption?: string;
   backgroundColor?: string;
   textColor?: string;
 }
