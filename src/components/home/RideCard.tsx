@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Users, Star, Share2, UserPlus, Navigation, Camera, Fuel } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { formatRideDate, getTimeUntilRide, getRideTypeEmoji, getDifficultyColorFromDistance, getDifficultyFromDistance } from "@/lib/rideUtils";
+import { formatRideDate, getTimeUntilRide, getRideTypeEmoji, getDifficultyColorFromDistance, getDifficultyFromDistance, stableSeed } from "@/lib/rideUtils";
 import { TYPE_GRADIENTS } from "@/constants";
 import type { Ride } from "@/types";
 import "./RideCard.css";
@@ -22,12 +22,17 @@ const RideCard = memo(({ ride }: RideCardProps) => {
   const timeStatus = getTimeUntilRide(ride.date);
   const typeEmoji = getRideTypeEmoji(ride.type);
 
-  // Use real rating when available; fall back to a deterministic placeholder
-  const stableValues = useMemo(() => ({
-    rating: ride.rating ? ride.rating.toFixed(1) : `4.${(ride.id % 4) + 5}`,
-    photos: (ride.id * 7) % 30 + 10,
-    stops: (ride.id % 3) + 1,
-  }), [ride.id, ride.rating]);
+  // Use real rating when available; fall back to a deterministic placeholder.
+  // Seeded via stableSeed because API ride ids are UUIDs — arithmetic straight on
+  // the id would be NaN for every real ride.
+  const stableValues = useMemo(() => {
+    const seed = stableSeed(ride.id);
+    return {
+      rating: ride.rating ? ride.rating.toFixed(1) : `4.${(seed % 4) + 5}`,
+      photos: ((seed * 7) % 30) + 10,
+      stops: (seed % 3) + 1,
+    };
+  }, [ride.id, ride.rating]);
   
   // Determine if ride is featured (high joined count or organizer)
   const isFeatured = ride.joinedCount >= 10 || ride.isOrganizer;

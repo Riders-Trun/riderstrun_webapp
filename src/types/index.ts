@@ -1,7 +1,8 @@
 // ===== Ride Types =====
 
 export interface Ride {
-  id: number;
+  // Mock data uses numeric ids; the API issues UUIDs.
+  id: string | number;
   title: string;
   date: string;
   distance: string;
@@ -11,7 +12,10 @@ export interface Ride {
   joinedCount: number;
   maxRiders: number;
   isOrganizer: boolean;
-  distanceFromUser: string;
+  // Needs the rider's geolocation — the API does not provide it.
+  distanceFromUser?: string;
+  /** ISO timestamp from the API, used for "newest" sorting. Absent in mock data. */
+  createdAt?: string;
   pillionAvailable?: boolean;
   pillionSlots?: number;
   tripCode?: string;
@@ -188,7 +192,8 @@ export interface Notification {
 // ===== My Rides Types =====
 
 export interface MyRide {
-  id: number;
+  // Mock data uses numeric ids; the API issues UUIDs.
+  id: string | number;
   title: string;
   date: string;
   distance: string;

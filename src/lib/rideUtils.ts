@@ -56,3 +56,20 @@ export const getDifficultyFromDistance = (distance: string) => {
 export const getDifficultyColorFromDistance = (distance: string) => {
   return getDifficultyColor(getDifficultyFromDistance(distance));
 };
+
+/**
+ * A small, stable non-negative number derived from a ride id.
+ *
+ * Ride ids are numeric in mock data but UUID strings from the API, so anything
+ * doing arithmetic on the id directly (placeholder ratings, photo counts) yields
+ * NaN once real data arrives. Hashing first keeps those values deterministic for
+ * a given ride regardless of which id format it has.
+ */
+export const stableSeed = (id: string | number): number => {
+  if (typeof id === "number") return Math.abs(Math.trunc(id));
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+};

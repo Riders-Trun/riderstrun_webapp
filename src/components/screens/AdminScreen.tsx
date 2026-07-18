@@ -30,7 +30,9 @@ const adminApi = {
   getUsers: () =>
     api.get<{ status: string; data: { users: AdminUser[]; meta: { total: number; limit: number; offset: number } } }>("/api/admin/users"),
   getRides: () =>
-    api.get<{ status: string; data: AdminRide[] }>("/api/admin/rides"),
+    api.get<{ status: string; data: { rides: AdminRide[]; meta: { total: number; limit: number; offset: number } } }>(
+      "/api/admin/rides"
+    ),
   getStats: () =>
     api.get<{ status: string; data: { stats: DashboardStats } }>("/api/admin/stats"),
   toggleUserBlock: (userId: number, block: boolean) =>
@@ -378,7 +380,7 @@ const RidesTab = ({ search, onSearchChange }: { search: string; onSearchChange: 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "rides"] }),
   });
 
-  const rides = ridesRes?.data || [];
+  const rides = ridesRes?.data?.rides || [];
   const filteredRides = rides.filter(
     (r) =>
       !search ||

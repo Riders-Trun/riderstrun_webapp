@@ -1,73 +1,67 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ridesApi } from "@/services/api";
+import { toRide, toMyRide, toRideDetail, type ApiRide, type ApiParticipant } from "@/services/adapters";
+import { useAuth } from "@/contexts/AuthContext";
 import { AVAILABLE_RIDES, UPCOMING_RIDES, PAST_RIDES, ORGANIZED_RIDES } from "@/data/rides";
 import type { Ride, MyRide } from "@/types";
 
 // Flag to switch between mock and real API
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
 
-const fetchRides = async (): Promise<Ride[]> => {
+// The API speaks snake_case rows; the UI renders view models. Everything that
+// crosses that boundary goes through the adapters rather than being cast.
+const fetchRides = async (userId?: number): Promise<Ride[]> => {
   if (USE_MOCK) return AVAILABLE_RIDES;
   const res = await ridesApi.list();
-  return (res.data || []) as unknown as Ride[];
+  return ((res.data ?? []) as unknown as ApiRide[]).map((r) => toRide(r, userId));
 };
 
-const fetchUpcomingRides = async (): Promise<MyRide[]> => {
-  if (USE_MOCK) return UPCOMING_RIDES;
-  const res = await ridesApi.list({ status: "upcoming", mine: true });
-  return (res.data || []) as unknown as MyRide[];
+const fetchMyRides = async (bucket: string, userId?: number): Promise<MyRide[]> => {
+  const res = await ridesApi.list({ status: bucket, mine: true });
+  return ((res.data ?? []) as unknown as ApiRide[]).map((r) => toMyRide(r, userId));
 };
 
-const fetchPastRides = async (): Promise<MyRide[]> => {
-  if (USE_MOCK) return PAST_RIDES;
-  const res = await ridesApi.list({ status: "past", mine: true });
-  return (res.data || []) as unknown as MyRide[];
-};
-
-const fetchOrganizedRides = async (): Promise<MyRide[]> => {
-  if (USE_MOCK) return ORGANIZED_RIDES;
-  const res = await ridesApi.list({ status: "organized", mine: true });
-  return (res.data || []) as unknown as MyRide[];
-};
-
-export const useRides = () =>
-  useQuery({
-    queryKey: ["rides"],
-    queryFn: fetchRides,
+export const useRides = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["rides", user?.id],
+    queryFn: () => fetchRides(user?.id),
     staleTime: 5 * 60 * 1000,
   });
+};
 
-export const useRideById = (id: string) =>
-  useQuery({
-    queryKey: ["rides", id],
+export const useRideById = (id: string) => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["rides", id, user?.id],
     queryFn: async () => {
       if (USE_MOCK) return null;
+      // The endpoint returns { ride, participants }; the screen wants a view model
       const res = await ridesApi.getById(id);
-      return res.data;
+      if (!res.data?.ride) return null;
+      return toRideDetail(
+        res.data.ride as unknown as ApiRide,
+        (res.data.participants ?? []) as unknown as ApiParticipant[],
+        user?.id
+      );
     },
     enabled: !!id && !USE_MOCK,
   });
+};
 
-export const useUpcomingRides = () =>
-  useQuery({
-    queryKey: ["rides", "upcoming"],
-    queryFn: fetchUpcomingRides,
-    staleTime: 2 * 60 * 1000,
+/** Shared by the three My Rides buckets — each hits ?mine=true&status=<bucket>. */
+const useMyRides = (bucket: "upcoming" | "past" | "organized", fallback: MyRide[], staleTime: number) => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["rides", bucket, user?.id],
+    queryFn: () => (USE_MOCK ? Promise.resolve(fallback) : fetchMyRides(bucket, user?.id)),
+    staleTime,
   });
+};
 
-export const usePastRides = () =>
-  useQuery({
-    queryKey: ["rides", "past"],
-    queryFn: fetchPastRides,
-    staleTime: 5 * 60 * 1000,
-  });
-
-export const useOrganizedRides = () =>
-  useQuery({
-    queryKey: ["rides", "organized"],
-    queryFn: fetchOrganizedRides,
-    staleTime: 5 * 60 * 1000,
-  });
+export const useUpcomingRides = () => useMyRides("upcoming", UPCOMING_RIDES, 2 * 60 * 1000);
+export const usePastRides = () => useMyRides("past", PAST_RIDES, 5 * 60 * 1000);
+export const useOrganizedRides = () => useMyRides("organized", ORGANIZED_RIDES, 5 * 60 * 1000);
 
 export const useCreateRide = () => {
   const queryClient = useQueryClient();

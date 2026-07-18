@@ -89,6 +89,21 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+/**
+ * The backend wraps every list in an object — `{ rides, meta }`, `{ comments, meta }`,
+ * `{ connections, meta }` and so on — while the UI just wants the array. This pulls
+ * the named collection out so callers can keep treating `res.data` as a list.
+ */
+async function requestList<T>(
+  endpoint: string,
+  key: string,
+  options?: RequestInit & { skipAuth?: boolean }
+): Promise<ApiResponse<T[]>> {
+  const res = await request<ApiResponse<Record<string, unknown>>>(endpoint, options);
+  const items = (res.data?.[key] as T[] | undefined) ?? [];
+  return { status: res.status, data: items, message: res.message };
+}
+
 // Auth API
 export const authApi = {
   signup: (email: string, password: string) =>
@@ -138,19 +153,27 @@ export const profileApi = {
 
 // Rides API
 export const ridesApi = {
+  // `mine: true` switches to the caller's own rides (needs a token); the public
+  // feed works without one, so auth is only skipped when we are not asking for
+  // "my rides" — otherwise the request would 401.
   list: (params?: Record<string, string | boolean>) => {
     const qs = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
-    return request<ApiResponse<Record<string, unknown>[]>>(`/api/rides${qs}`, { skipAuth: true });
+    const isMine = params?.mine === true || params?.mine === "true";
+    return requestList<Record<string, unknown>>(
+      `/api/rides${qs}`,
+      "rides",
+      isMine ? undefined : { skipAuth: true }
+    );
   },
   create: (data: Record<string, unknown>) =>
     request<ApiResponse<Record<string, unknown>>>("/api/rides", {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  // No skipAuth: a private ride is only visible to its organizer/participants.
   getById: (id: string) =>
-    request<ApiResponse<Record<string, unknown>>>(
-      `/api/rides/${encodeURIComponent(id)}`,
-      { skipAuth: true }
+    request<ApiResponse<{ ride: Record<string, unknown>; participants: Record<string, unknown>[] }>>(
+      `/api/rides/${encodeURIComponent(id)}`
     ),
   join: (id: string) =>
     request<ApiResponse<Record<string, unknown>>>(
@@ -162,10 +185,11 @@ export const ridesApi = {
       `/api/rides/${encodeURIComponent(id)}/complete`,
       { method: "POST" }
     ),
+  // No skipAuth: private/invite-only rides need the token to read comments.
   getComments: (id: string) =>
-    request<ApiResponse<Record<string, unknown>[]>>(
+    requestList<Record<string, unknown>>(
       `/api/rides/${encodeURIComponent(id)}/comments`,
-      { skipAuth: true }
+      "comments"
     ),
   addComment: (id: string, content: string, parentId?: string) =>
     request<ApiResponse<Record<string, unknown>>>(
@@ -173,9 +197,9 @@ export const ridesApi = {
       { method: "POST", body: JSON.stringify({ content, parent_id: parentId }) }
     ),
   getMedia: (id: string) =>
-    request<ApiResponse<Record<string, unknown>[]>>(
+    requestList<Record<string, unknown>>(
       `/api/rides/${encodeURIComponent(id)}/media`,
-      { skipAuth: true }
+      "media"
     ),
   addMedia: (id: string, mediaUrl: string, mediaType: string, caption?: string) =>
     request<ApiResponse<Record<string, unknown>>>(
@@ -187,8 +211,9 @@ export const ridesApi = {
 // Social API
 export const socialApi = {
   getConnections: (status?: string) =>
-    request<ApiResponse<Record<string, unknown>[]>>(
-      `/api/social/connections${status ? `?status=${encodeURIComponent(status)}` : ""}`
+    requestList<Record<string, unknown>>(
+      `/api/social/connections${status ? `?status=${encodeURIComponent(status)}` : ""}`,
+      "connections"
     ),
   connectionAction: (targetUserId: number, action: string) =>
     request<ApiResponse<Record<string, unknown>>>(
@@ -196,11 +221,12 @@ export const socialApi = {
       { method: "POST", body: JSON.stringify({ targetUserId, action }) }
     ),
   search: (query: string) =>
-    request<ApiResponse<Record<string, unknown>[]>>(
-      `/api/social/search?q=${encodeURIComponent(query)}`
+    requestList<Record<string, unknown>>(
+      `/api/social/search?q=${encodeURIComponent(query)}`,
+      "users"
     ),
   suggestions: () =>
-    request<ApiResponse<Record<string, unknown>[]>>("/api/social/suggestions"),
+    requestList<Record<string, unknown>>("/api/social/suggestions", "suggestions"),
   mutuals: (userId: number) =>
     request<ApiResponse<Record<string, unknown>>>(
       `/api/social/mutuals/${userId}`

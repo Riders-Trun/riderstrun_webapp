@@ -17,6 +17,35 @@ import {
   Calendar, DollarSign, FileText,
 } from "lucide-react";
 
+/**
+ * What this screen can render.
+ *
+ * Everything the API supplies is required; the mock-only sections are optional
+ * because the backend has no source for them yet. Deriving the optional half
+ * from the mock object keeps the two in step without restating every nested
+ * shape (costs, route, weather, …).
+ */
+type CoreDetailFields =
+  | "title"
+  | "date"
+  | "distance"
+  | "organizer"
+  | "type"
+  | "joinedCount"
+  | "maxRiders";
+
+// The mock carries no id and the screen never reads one, so it stays optional.
+type RideDetailView = Omit<Partial<typeof mockRideDetails>, CoreDetailFields> & {
+  id?: string | number;
+  title: string;
+  date: string;
+  distance: string;
+  organizer: string;
+  type: string;
+  joinedCount: number;
+  maxRiders: number;
+};
+
 const RideDetailsScreen = () => {
   const { id } = useParams<{ id: string }>();
   const { isLoading: simulatedLoading } = useSimulatedLoading(1200);
@@ -24,15 +53,25 @@ const RideDetailsScreen = () => {
   const [isJoined, setIsJoined] = useState(false);
   const [showAllPreviousTrips, setShowAllPreviousTrips] = useState(false);
 
-  // Use API data when available, otherwise fall back to mock
-  const ride = (apiRide as typeof mockRideDetails | null) ?? mockRideDetails;
+  // Use API data when available, otherwise fall back to mock.
+  //
+  // The API only supplies the core ride fields — costs, route, weather, safety
+  // gear, schedule, rules, previous trips, reviews and the organizer's
+  // rating/phone have no backend source. Those are optional here and each
+  // section below renders only when its data exists, so a real ride shows what
+  // is known instead of crashing on undefined.
+  const ride: RideDetailView = apiRide ?? mockRideDetails;
   const isLoading = simulatedLoading || apiLoading;
-  const averageRating =
-    ride.reviews.reduce((sum, review) => sum + review.rating, 0) /
-    ride.reviews.length;
+
+  const reviews = ride.reviews ?? [];
+  const averageRating = reviews.length
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    : null;
 
   const handleJoinRide = () => setIsJoined(true);
-  const handleContactOrganizer = () => window.open(`tel:${ride.organizerPhone}`);
+  const handleContactOrganizer = () => {
+    if (ride.organizerPhone) window.open(`tel:${ride.organizerPhone}`);
+  };
 
   if (isLoading) return <RideDetailsSkeleton />;
 
@@ -77,18 +116,22 @@ const RideDetailsScreen = () => {
                     <div className="text-xs text-orange-700">
                       {ride.startLocation} → {ride.destination}
                     </div>
-                    <div className="text-xs text-gray-600 mt-1">
-                      {ride.route.roadConditions}
-                    </div>
+                    {ride.route?.roadConditions && (
+                      <div className="text-xs text-gray-600 mt-1">
+                        {ride.route.roadConditions}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 ml-4">
                   <Badge variant="outline" className="text-center">{ride.type}</Badge>
                   <Badge variant="secondary" className="text-center">{ride.difficulty}</Badge>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span>{averageRating.toFixed(1)} ({ride.reviews.length})</span>
-                  </div>
+                  {averageRating !== null && (
+                    <div className="flex items-center gap-1 text-sm">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span>{averageRating.toFixed(1)} ({reviews.length})</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -125,34 +168,36 @@ const RideDetailsScreen = () => {
                 </Button>
               </div>
 
-              {/* Cost Breakdown */}
-              <div className="p-3 border border-orange-200 rounded-lg bg-orange-50">
-                <div className="flex items-center gap-2 mb-3">
-                  <DollarSign className="w-5 h-5 text-orange-600" />
-                  <span className="font-medium text-orange-800">Cost Breakdown</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Fuel (est):</span>
-                    <span className="font-medium">{ride.costs.fuel}</span>
+              {/* Cost Breakdown — the API has no cost data, so this hides for real rides */}
+              {ride.costs && (
+                <div className="p-3 border border-orange-200 rounded-lg bg-orange-50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <DollarSign className="w-5 h-5 text-orange-600" />
+                    <span className="font-medium text-orange-800">Cost Breakdown</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Breakfast:</span>
-                    <span className="font-medium">₹{ride.costs.breakfast}</span>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Fuel (est):</span>
+                      <span className="font-medium">{ride.costs.fuel}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Breakfast:</span>
+                      <span className="font-medium">₹{ride.costs.breakfast}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tolls & Parking:</span>
+                      <span className="font-medium">
+                        ₹{ride.costs.tollCharges + ride.costs.parking}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Tolls & Parking:</span>
-                    <span className="font-medium">
-                      ₹{ride.costs.tollCharges + ride.costs.parking}
-                    </span>
+                  <Separator className="my-2" />
+                  <div className="flex justify-between font-semibold text-orange-800">
+                    <span>Total Cost:</span>
+                    <span>{ride.costs.total}</span>
                   </div>
                 </div>
-                <Separator className="my-2" />
-                <div className="flex justify-between font-semibold text-orange-800">
-                  <span>Total Cost:</span>
-                  <span>{ride.costs.total}</span>
-                </div>
-              </div>
+              )}
 
               {/* Participation Status */}
               <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -179,7 +224,8 @@ const RideDetailsScreen = () => {
             </CardContent>
           </Card>
 
-          {/* Weather Info */}
+          {/* Weather Info — no backend source, hidden for real rides */}
+          {ride.weather && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -205,8 +251,10 @@ const RideDetailsScreen = () => {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Safety Requirements */}
+          {ride.safetyGear && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -243,8 +291,10 @@ const RideDetailsScreen = () => {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Detailed Schedule */}
+          {ride.schedule && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -271,8 +321,10 @@ const RideDetailsScreen = () => {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Rules */}
+          {ride.rules && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -295,24 +347,29 @@ const RideDetailsScreen = () => {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
 
-        {/* Previous Trips Section */}
-        <PreviousTripsSection
-          previousTrips={ride.previousTrips}
-          showAll={showAllPreviousTrips}
-          onToggleShowAll={() => setShowAllPreviousTrips(!showAllPreviousTrips)}
-        />
+        {/* Previous Trips Section — no backend source, hidden for real rides */}
+        {ride.previousTrips && (
+          <PreviousTripsSection
+            previousTrips={ride.previousTrips}
+            showAll={showAllPreviousTrips}
+            onToggleShowAll={() => setShowAllPreviousTrips(!showAllPreviousTrips)}
+          />
+        )}
 
         {/* Bottom Action */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg">
           <div className="max-w-md mx-auto">
             {!isJoined ? (
               <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs text-gray-500">
-                  <span>Estimated Total Cost:</span>
-                  <span>{ride.costs.total}</span>
-                </div>
+                {ride.costs && (
+                  <div className="flex justify-between items-center text-xs text-gray-500">
+                    <span>Estimated Total Cost:</span>
+                    <span>{ride.costs.total}</span>
+                  </div>
+                )}
                 <Button
                   className="w-full bg-orange-500 hover:bg-orange-600"
                   size="lg"

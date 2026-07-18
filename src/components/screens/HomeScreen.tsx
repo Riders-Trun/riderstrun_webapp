@@ -10,6 +10,27 @@ import FadeIn from "@/components/ui/FadeIn";
 import { useFilters } from "@/hooks/useFilters";
 import { useRides } from "@/hooks/useRides";
 import { RIDE_TYPES } from "@/constants";
+import { stableSeed } from "@/lib/rideUtils";
+import type { Ride } from "@/types";
+
+/**
+ * Recency rank for the "newest" sort. Ride ids are UUIDs from the API, so the
+ * old `b.id - a.id` produced NaN; prefer the real creation timestamp and fall
+ * back to the numeric id that mock data still uses.
+ */
+const newestRank = (ride: Ride): number => {
+  if (ride.createdAt) {
+    const t = new Date(ride.createdAt).getTime();
+    if (Number.isFinite(t)) return t;
+  }
+  return typeof ride.id === "number" ? ride.id : stableSeed(ride.id);
+};
+
+/** Distance from the rider in km; unknown distances sort last. */
+const distanceRank = (ride: Ride): number => {
+  const n = parseFloat(ride.distanceFromUser ?? "");
+  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+};
 
 const HomeScreen = () => {
   const { data: rides = [], isLoading } = useRides();
@@ -63,10 +84,12 @@ const HomeScreen = () => {
       case "popular":
         return b.joinedCount - a.joinedCount;
       case "newest":
-        return b.id - a.id;
+        return newestRank(b) - newestRank(a);
       case "nearest":
       default:
-        return parseFloat(a.distanceFromUser) - parseFloat(b.distanceFromUser);
+        // Rides with no known distance sort last instead of poisoning the
+        // comparator with NaN.
+        return distanceRank(a) - distanceRank(b);
     }
   }), [filteredRides, filters.sortBy]);
 
