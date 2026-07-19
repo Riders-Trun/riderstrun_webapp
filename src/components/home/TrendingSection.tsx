@@ -1,15 +1,22 @@
+import { mockOr } from "@/lib/mock";
 
 import { Badge } from "@/components/ui/badge";
 
 const TrendingSection = () => {
-  const trendingDestinations = [
-    { name: "Nandi Hills", emoji: "🌄" },
-    { name: "Coorg", emoji: "☕" },
-    { name: "Chikmagalur", emoji: "🏔️" },
-    { name: "Wayanad", emoji: "🌿" },
-    { name: "Hampi", emoji: "🏛️" },
-    { name: "Gokarna", emoji: "🏖️" }
-  ];
+  // "Trending" is a claim about real activity, and nothing computes it — there
+  // is no endpoint behind this. Empty outside mock mode rather than presenting a
+  // curated list as if it were measured.
+  const trendingDestinations = mockOr(
+    [
+      { name: "Nandi Hills", emoji: "🌄" },
+      { name: "Coorg", emoji: "☕" },
+      { name: "Chikmagalur", emoji: "🏔️" },
+      { name: "Wayanad", emoji: "🌿" },
+      { name: "Hampi", emoji: "🏛️" },
+      { name: "Gokarna", emoji: "🏖️" },
+    ],
+    []
+  );
 
   return (
     <div className="p-4 pb-2 bg-white/50">

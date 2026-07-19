@@ -1,3 +1,4 @@
+import { mockOr } from "@/lib/mock";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,9 @@ import GlobalHeader from "@/components/GlobalHeader";
 const TravelDiaryScreen = () => {
   const [selectedTab, setSelectedTab] = useState("entries");
 
-  const diaryEntries = [
+  // Demo-only: no diary endpoint exists. Empty outside mock mode rather than
+  // showing trips the rider never took.
+  const diaryEntries = mockOr([
     {
       id: 1,
       title: "Epic Nandi Hills Sunrise",
@@ -55,14 +58,12 @@ const TravelDiaryScreen = () => {
       comments: 15,
       weather: "Sunny, 26°C"
     }
-  ];
+  ], []);
 
-  const stats = {
-    totalTrips: 23,
-    totalDistance: "3,450 km",
-    totalPhotos: 456,
-    averageRating: 4.6
-  };
+  const stats = mockOr(
+    { totalTrips: 23, totalDistance: "3,450 km", totalPhotos: 456, averageRating: 4.6 },
+    { totalTrips: 0, totalDistance: "0 km", totalPhotos: 0, averageRating: 0 }
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">

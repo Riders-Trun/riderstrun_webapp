@@ -10,6 +10,7 @@ import { useSimulatedLoading } from "@/hooks/useLoading";
 import RideDetailsSkeleton from "./RideDetailsSkeleton";
 import PreviousTripsSection from "@/components/ride-details/PreviousTripsSection";
 import { mockRideDetails } from "@/data/rideDetails";
+import { mockOr } from "@/lib/mock";
 import { useRideById } from "@/hooks/useRides";
 import {
   MapPin, Clock, Users, Shield, Phone, CheckCircle, AlertTriangle,
@@ -60,7 +61,10 @@ const RideDetailsScreen = () => {
   // rating/phone have no backend source. Those are optional here and each
   // section below renders only when its data exists, so a real ride shows what
   // is known instead of crashing on undefined.
-  const ride: RideDetailView = apiRide ?? mockRideDetails;
+  // Outside mock mode there is no fabricated fallback: if the API has no ride,
+  // the sections below simply render nothing (each is already conditional)
+  // rather than showing another ride's costs, route and reviews.
+  const ride: RideDetailView = apiRide ?? mockOr(mockRideDetails, {} as RideDetailView);
   const isLoading = simulatedLoading || apiLoading;
 
   const reviews = ride.reviews ?? [];

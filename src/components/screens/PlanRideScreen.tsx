@@ -1,4 +1,5 @@
 
+import { mockOr } from "@/lib/mock";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -35,16 +36,18 @@ const PlanRideScreen = () => {
   const { toast } = useToast();
   const createRide = useCreateRide();
 
-  // Mock user streak data
-  const userStats = {
-    currentStreak: 7,
-    longestStreak: 15,
-    ridesOrganized: 23,
-    totalPoints: 1250
-  };
+  // Demo-only: streaks and points have no backend. Zeros outside mock mode
+  // rather than crediting the rider with 23 rides they never organised.
+  const userStats = mockOr(
+    { currentStreak: 7, longestStreak: 15, ridesOrganized: 23, totalPoints: 1250 },
+    { currentStreak: 0, longestStreak: 0, ridesOrganized: 0, totalPoints: 0 }
+  );
 
   // Pre-planned popular routes from "database"
-  const popularRoutes = [
+  // Demo-only: there is no popular-routes endpoint, and these carry invented
+  // ride counts and ratings. Outside mock mode the section renders empty rather
+  // than inviting riders to pick a route nobody has actually ridden.
+  const DEMO_POPULAR_ROUTES = [
     {
       id: "nandi-sunrise",
       name: "Nandi Hills Sunrise",
@@ -102,6 +105,8 @@ const PlanRideScreen = () => {
       streak: { current: 5, target: 7, reward: "75 points" }
     }
   ];
+
+  const popularRoutes = mockOr(DEMO_POPULAR_ROUTES, []);
 
   const handlePresetSelect = (preset: { title: string; type: string; time: string; maxRiders: string; description: string; pitStops: string[]; rules: string[] }) => {
     setFormData({

@@ -118,8 +118,11 @@ export const authApi = {
     ),
   logout: () =>
     request<ApiResponse<null>>("/api/auth/logout", { method: "POST" }),
+  // Returns the user alongside the token: the access token is issued by Cognito
+  // and carries neither our user id nor our role, so the server is the only
+  // authority on identity. Never decode the token to find out who you are.
   refresh: () =>
-    request<ApiResponse<{ accessToken: string }>>(
+    request<ApiResponse<{ accessToken: string; user: { id: number; email: string; role: string } }>>(
       "/api/auth/refresh",
       { method: "POST", skipAuth: true }
     ),

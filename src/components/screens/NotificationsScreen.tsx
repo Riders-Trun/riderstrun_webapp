@@ -5,9 +5,12 @@ import { Bell, Clock, MapPin, Users, AlertCircle, CheckCircle, ChevronRight } fr
 import { useState } from "react";
 import GlobalHeader from "@/components/GlobalHeader";
 import { MOCK_NOTIFICATIONS } from "@/data/notifications";
+import { mockOr } from "@/lib/mock";
 
 const NotificationsScreen = () => {
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  // Demo-only: no /api/notifications exists yet, so this screen is empty
+  // against a real backend until one does.
+  const [notifications, setNotifications] = useState(mockOr(MOCK_NOTIFICATIONS, []));
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));

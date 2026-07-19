@@ -1,3 +1,4 @@
+import { mockOr } from "@/lib/mock";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,9 @@ const JoinRideScreen = () => {
     handleJoinRideWithCode(code);
   };
 
-  const suggestedCodes = [...SUGGESTED_TRIP_CODES];
+  // These codes do not correspond to real rides — tapping one "finds" a ride
+  // that does not exist. Hidden outside mock mode.
+  const suggestedCodes = mockOr([...SUGGESTED_TRIP_CODES], [] as string[]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

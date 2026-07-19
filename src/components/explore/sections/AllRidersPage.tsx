@@ -1,3 +1,4 @@
+import { mockOr } from "@/lib/mock";
 import { useState } from "react";
 import { 
   ArrowLeft, 
@@ -40,7 +41,9 @@ const AllRidersPage = ({
   const [selectedTab, setSelectedTab] = useState("riders");
 
   // Mock data for all riders
-  const allRiders = [
+  // Demo-only: no riders endpoint. Empty outside mock mode rather than listing
+  // people who do not exist.
+  const allRiders = mockOr([
     {
       id: 1,
       name: "Arjun Patel",
@@ -101,10 +104,10 @@ const AllRidersPage = ({
       lastActive: "1 hour ago",
       specialties: ["Track Days", "Performance"]
     }
-  ];
+  ], []);
 
-  // Mock popular routes
-  const popularRoutes = [
+  // Demo-only: no popular-routes endpoint.
+  const popularRoutes = mockOr([
     {
       id: 1,
       name: "Nandi Hills Sunrise",
@@ -132,7 +135,7 @@ const AllRidersPage = ({
       completions: 67,
       thumbnail: "/api/placeholder/120/80"
     }
-  ];
+  ], []);
 
   const getStatusColor = (status: string) => {
     switch (status) {

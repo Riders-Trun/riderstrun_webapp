@@ -1,5 +1,6 @@
 import { ArrowLeft, Search, Bell, Filter, MapPin, Menu } from "lucide-react";
 import { MOCK_NOTIFICATIONS } from "@/data/notifications";
+import { mockOr } from "@/lib/mock";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,9 +54,11 @@ const GlobalHeader = ({
 }: GlobalHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  // There is no notifications endpoint yet, so outside mock mode the badge
+  // shows nothing rather than a fabricated count.
   const unreadCount = notificationCount !== undefined
     ? notificationCount
-    : MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length;
+    : mockOr(MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length, 0);
   const [isCustomLocation, setIsCustomLocation] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
 

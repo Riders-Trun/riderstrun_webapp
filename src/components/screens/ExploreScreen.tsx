@@ -24,10 +24,18 @@ import InviteSystem from "@/components/explore/sections/InviteSystem";
 import StoryViewer from "@/components/explore/stories/StoryViewer";
 import StoryCreator from "@/components/explore/stories/StoryCreator";
 import { NEARBY_RIDERS, CREW_INTENTS, MENTORS } from "@/data/explore";
+import { mockOr } from "@/lib/mock";
 import type { StoryContent } from "@/types";
 
-// Mock data for ride moments
-const rideMoments = [
+// Nothing on this screen has a backend endpoint yet. Outside mock mode every
+// section renders empty rather than showing riders, crews and events that do
+// not exist — fabricated people are worse than an empty section.
+const nearbyRiders = mockOr(NEARBY_RIDERS, []);
+const crewIntents = mockOr(CREW_INTENTS, []);
+const mentors = mockOr(MENTORS, []);
+
+// Demo data for ride moments
+const DEMO_RIDE_MOMENTS = [
   {
     id: 1,
     rider: {
@@ -60,7 +68,7 @@ const rideMoments = [
 ];
 
 // Mock data for community initiatives
-const communityInitiatives = [
+const DEMO_COMMUNITY_INITIATIVES = [
   {
     id: 1,
     title: "Blood Donation Drive - Riders for Life",
@@ -101,7 +109,7 @@ const communityInitiatives = [
 ];
 
 // Stories data
-const stories = [
+const DEMO_STORIES = [
   {
     id: 1,
     user: { name: "Alex", avatar: "/api/placeholder/40/40", isViewed: false },
@@ -114,7 +122,7 @@ const stories = [
   }
 ];
 
-const mockStoryData = [
+const DEMO_STORY_DATA = [
   {
     id: 1,
     user: { name: "Alex", avatar: "/api/placeholder/40/40" },
@@ -128,6 +136,14 @@ const mockStoryData = [
     timestamp: "2h ago"
   }
 ];
+
+// Everything above is demo-only. Gating it here — rather than at each usage —
+// keeps the rest of the component unchanged and makes the whole screen fall
+// back to empty in one place.
+const rideMoments = mockOr(DEMO_RIDE_MOMENTS, []);
+const communityInitiatives = mockOr(DEMO_COMMUNITY_INITIATIVES, []);
+const stories = mockOr(DEMO_STORIES, []);
+const mockStoryData = mockOr(DEMO_STORY_DATA, []);
 
 const ExploreScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -210,7 +226,7 @@ const ExploreScreen = () => {
   };
 
   // Filter nearby riders based on selected filters
-  const filteredRiders = NEARBY_RIDERS.filter(rider => {
+  const filteredRiders = nearbyRiders.filter(rider => {
     if (riderFilters.status !== "all" && rider.status !== riderFilters.status) return false;
     if (riderFilters.rideStyle !== "all" && !rider.rideStyle.some(style => 
       style.toLowerCase().includes(riderFilters.rideStyle.toLowerCase())
@@ -315,7 +331,7 @@ const ExploreScreen = () => {
               </div>
               
               <div className="grid grid-cols-1 gap-4">
-                {MENTORS.map((mentor) => (
+                {mentors.map((mentor) => (
                   <MentorHighlightCard
                     key={mentor.id}
                     mentor={mentor}
@@ -351,7 +367,7 @@ const ExploreScreen = () => {
           {/* Crew Finder Tab */}
           <TabsContent value="crew" className="px-4 space-y-6 mt-6">
             <CrewFinder
-              crewIntents={CREW_INTENTS}
+              crewIntents={crewIntents}
               onJoinCrew={handleJoinCrew}
               onCreateIntent={handleCreateCrewIntent}
             />

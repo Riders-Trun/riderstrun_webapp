@@ -30,17 +30,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const res = await authApi.refresh();
         if (res.status === "success" && res.data) {
           setAccessToken(res.data.accessToken);
-          // Decode user from JWT payload. The token is issued by our own server so
-          // reading the payload is safe — the server will still verify the signature
-          // on every request. We add standard base64 padding to avoid atob crashes
-          // on tokens that omit the trailing `=` characters.
-          try {
-            const base64 = res.data.accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
-            const payload = JSON.parse(atob(padded));
-            setUser({ id: payload.sub, email: payload.email, role: payload.role });
-          } catch {
-            // If decoding fails, clear the session so the user is prompted to log in
+
+          // Take the user from the response, never from the token.
+          //
+          // This used to decode the JWT payload, which worked only while the
+          // server signed its own tokens. Cognito tokens carry no `role` and a
+          // `sub` that is Cognito's UUID rather than our user id, so decoding
+          // silently produced a user with role `undefined` — losing admin
+          // access on every page refresh while login still appeared to work.
+          if (res.data.user) {
+            setUser(res.data.user);
+          } else {
             setAccessToken(null);
           }
         }

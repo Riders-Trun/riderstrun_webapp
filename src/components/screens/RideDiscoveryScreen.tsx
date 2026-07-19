@@ -19,6 +19,7 @@ import RouteTab from "@/components/ride-discovery/RouteTab";
 import TalksTab from "@/components/ride-discovery/TalksTab";
 import PhotosTab from "@/components/ride-discovery/PhotosTab";
 import { getMockRideData } from "@/data/rideDiscovery";
+import { mockOr } from "@/lib/mock";
 
 const RideDiscoveryScreen = () => {
   const navigate = useNavigate();
@@ -33,7 +34,17 @@ const RideDiscoveryScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const rideData = getMockRideData(id || "1");
+  // This screen has no endpoint at all — route stops, rider talks, photos and
+  // past groups are demo-only. Outside mock mode every tab renders empty until
+  // a backend exists for them.
+  const demoData = getMockRideData(id || "1");
+  const rideData = mockOr(demoData, {
+    ...demoData,
+    routeStops: [],
+    riderTalks: [],
+    photos: [],
+    pastGroups: [],
+  });
 
   if (isLoading) {
     return (

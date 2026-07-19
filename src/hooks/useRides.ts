@@ -6,7 +6,10 @@ import { AVAILABLE_RIDES, UPCOMING_RIDES, PAST_RIDES, ORGANIZED_RIDES } from "@/
 import type { Ride, MyRide } from "@/types";
 
 // Flag to switch between mock and real API
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
+// Shared with every other screen — see src/lib/mock.ts. This used to be the
+// only place the flag was read, which is why turning mocks off still left the
+// rest of the UI full of demo data.
+import { USE_MOCK } from "@/lib/mock";
 
 // The API speaks snake_case rows; the UI renders view models. Everything that
 // crosses that boundary goes through the adapters rather than being cast.

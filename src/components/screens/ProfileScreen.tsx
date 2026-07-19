@@ -11,16 +11,49 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, MapPin, Award, Calendar, Edit3, Flame, Trophy, Target, Star, Zap, Shield, Phone, Bike, Mail, ChevronRight } from "lucide-react";
 import GlobalHeader from "@/components/GlobalHeader";
 import { DEFAULT_PROFILE, DEFAULT_RIDE_STATS, STREAKS, ACHIEVEMENTS, RECENT_RIDES, CHALLENGES } from "@/data/profile";
+import { mockOr } from "@/lib/mock";
+import { useAuth } from "@/contexts/AuthContext";
+import type { UserProfile, RideStats } from "@/types";
+
+/**
+ * This screen is not wired to /api/profile yet — it has always rendered demo
+ * data. Outside mock mode it shows an empty profile rather than "Alex Kumar"
+ * and 24 rides that belong to nobody. The signed-in email is filled in from the
+ * auth context so the screen is recognisably yours while the rest is blank.
+ */
+const EMPTY_PROFILE: UserProfile = {
+    name: "",
+    phone: "",
+    email: "",
+    bike: "",
+    ridingLevel: "",
+    location: "",
+    emergencyContact: { name: "", phone: "", relation: "" },
+};
+
+const EMPTY_RIDE_STATS: RideStats = {
+    totalRides: 0,
+    ridesOrganized: 0,
+    totalDistance: "0 km",
+    noShows: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    totalPoints: 0,
+    organizerRank: "—",
+};
 
 const ProfileScreen = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(
+    mockOr(DEFAULT_PROFILE, { ...EMPTY_PROFILE, email: user?.email ?? "" })
+  );
 
-  const rideStats = DEFAULT_RIDE_STATS;
-  const streaks = STREAKS;
-  const achievements = ACHIEVEMENTS;
-  const recentRides = RECENT_RIDES;
-  const challenges = CHALLENGES;
+  const rideStats = mockOr(DEFAULT_RIDE_STATS, EMPTY_RIDE_STATS);
+  const streaks = mockOr(STREAKS, []);
+  const achievements = mockOr(ACHIEVEMENTS, []);
+  const recentRides = mockOr(RECENT_RIDES, []);
+  const challenges = mockOr(CHALLENGES, []);
 
   const { toast } = useToast();
 

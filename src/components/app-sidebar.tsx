@@ -11,8 +11,9 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { MapPin, Calendar, Plus, Bell, User, QrCode, Zap } from "lucide-react";
+import { MapPin, Calendar, Plus, Bell, User, QrCode, Zap, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
   {
@@ -48,6 +49,11 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
+  // The /admin route is guarded server-side and by AdminRoute; this only decides
+  // whether the entry point is visible. Without it an admin has no way to reach
+  // the screen except by typing the URL.
+  const { isAdmin } = useAuth();
+
   return (
     <Sidebar className="border-r bg-gradient-to-b from-orange-50 to-white">
       <SidebarHeader className="p-4 border-b border-orange-100">
@@ -79,6 +85,24 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-orange-700 font-semibold">Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild className="hover:bg-orange-50 hover:text-orange-700 transition-colors">
+                    <Link to="/admin" className="flex items-center gap-3 py-3">
+                      <Shield className="w-5 h-5" />
+                      <span className="font-medium">Admin Console</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-orange-100">
         <div className="text-center">

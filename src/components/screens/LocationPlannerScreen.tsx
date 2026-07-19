@@ -1,3 +1,4 @@
+import { mockOr } from "@/lib/mock";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,9 @@ const LocationPlannerScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
 
-  const popularDestinations = [
+  // Demo-only: no destinations endpoint, and these carry invented distances and
+  // rider counts. Empty outside mock mode.
+  const popularDestinations = mockOr([
     {
       id: 1,
       name: "Nandi Hills",
@@ -56,7 +59,7 @@ const LocationPlannerScreen = () => {
       diningOptions: 6,
       estimatedCost: "₹2000-3000"
     }
-  ];
+  ], []);
 
   const routeTypes = [
     { id: "all", label: "All Routes", icon: Route },
