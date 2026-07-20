@@ -60,6 +60,14 @@ const NotificationsScreen = () => {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      // Types the API actually sends.
+      case 'ride_join_request': return Users;
+      case 'ride_join_approved': return CheckCircle;
+      case 'ride_comment': return Bell;
+      case 'ride_completed': return CheckCircle;
+      case 'connection_request': return Users;
+      case 'connection_accepted': return Users;
+      // Demo-only categories.
       case 'reminder': return Clock;
       case 'update': return MapPin;
       case 'delay': return AlertCircle;
@@ -71,6 +79,12 @@ const NotificationsScreen = () => {
 
   const getIconStyle = (type: string) => {
     switch (type) {
+      case 'ride_join_request': return 'text-purple-600 bg-purple-50';
+      case 'ride_join_approved': return 'text-green-600 bg-green-50';
+      case 'ride_comment': return 'text-blue-600 bg-blue-50';
+      case 'ride_completed': return 'text-green-600 bg-green-50';
+      case 'connection_request': return 'text-purple-600 bg-purple-50';
+      case 'connection_accepted': return 'text-green-600 bg-green-50';
       case 'reminder': return 'text-blue-600 bg-blue-50';
       case 'update': return 'text-orange-600 bg-orange-50';
       case 'delay': return 'text-red-500 bg-red-50';

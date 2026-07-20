@@ -1,6 +1,9 @@
 import { ArrowLeft, Search, Bell, Filter, MapPin, Menu } from "lucide-react";
 import { MOCK_NOTIFICATIONS } from "@/data/notifications";
-import { mockOr } from "@/lib/mock";
+import { mockOr, USE_MOCK } from "@/lib/mock";
+import { useQuery } from "@tanstack/react-query";
+import { notificationsApi } from "@/services/api";
+import { useConfig } from "@/contexts/ConfigContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,11 +57,18 @@ const GlobalHeader = ({
 }: GlobalHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  // There is no notifications endpoint yet, so outside mock mode the badge
-  // shows nothing rather than a fabricated count.
+  // The badge count comes from the server, which maintains it as a counter —
+  // asking for it does not pull the whole list.
+  const { isEnabled } = useConfig();
+  const { data: liveUnread } = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: async () => (await notificationsApi.unreadCount()).data?.unread ?? 0,
+    enabled: !USE_MOCK && isEnabled("notifications") && notificationCount === undefined,
+  });
+
   const unreadCount = notificationCount !== undefined
     ? notificationCount
-    : mockOr(MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length, 0);
+    : mockOr(MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length, liveUnread ?? 0);
   const [isCustomLocation, setIsCustomLocation] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
 
