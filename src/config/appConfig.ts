@@ -16,7 +16,8 @@ export interface AppConfig {
         visibilities: string[];
         vehicleTypes: string[];
         mediaTypes: string[];
-        rideTypes: string[];
+        /** Value/label pairs: the value is persisted and validated, the label is display text. */
+        rideTypes: { value: string; label: string }[];
         difficulties: string[];
         ridingStyles: string[];
         bikeBrands: string[];
@@ -51,7 +52,14 @@ export const FALLBACK_CONFIG: AppConfig = {
         visibilities: ['public', 'private', 'mutuals', 'invite_only'],
         vehicleTypes: ['bike', 'car', 'all'],
         mediaTypes: ['image', 'video'],
-        rideTypes: ['Leisure', 'Adventure', 'Touring'],
+        // Must stay in step with the server's catalog — these are the values a
+        // ride is created with if the config fetch has not landed yet.
+        rideTypes: [
+            { value: 'breakfast', label: 'Breakfast Ride' },
+            { value: 'offroad', label: 'Off-road Adventure' },
+            { value: 'long', label: 'Long Distance' },
+            { value: 'beginner', label: 'Beginner Friendly' },
+        ],
         difficulties: ['Easy', 'Moderate', 'Hard'],
         ridingStyles: [],
         bikeBrands: [],

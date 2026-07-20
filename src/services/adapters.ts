@@ -1,4 +1,4 @@
-import type { Ride, MyRide } from "@/types";
+import type { Ride, MyRide, UserProfile } from "@/types";
 
 /**
  * Translates backend ride rows into the view models the UI renders.
@@ -181,5 +181,85 @@ export function toMyRide(api: ApiRide, currentUserId?: number): MyRide {
     status: api.status ?? "",
     isCurrentUserOrganizer:
       currentUserId !== undefined && toNumber(api.organizer_id) === currentUserId,
+  };
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+
+/** The profile row as the API returns it (snake_case, storage-shaped). */
+export interface ApiProfile {
+  username?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  phone_number?: string | null;
+  bio?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  riding_level?: string | null;
+  bikes?: { model?: string; type?: string; brand?: string }[] | null;
+  emergency_contact?: { name?: string; phone?: string; relation?: string } | null;
+}
+
+/** "Royal Enfield Classic 350" from the first bike on file, brand then model. */
+function describeBike(bikes: ApiProfile["bikes"]): string {
+  const bike = bikes?.[0];
+  if (!bike) return "";
+  return [bike.brand, bike.model].filter(Boolean).join(" ").trim();
+}
+
+/**
+ * Backend profile → the `UserProfile` the screen renders.
+ *
+ * The two shapes differ more than the others: the API stores `city`/`state`
+ * separately and bikes as a list, while the screen shows one location string
+ * and one bike. Composing here keeps that translation in one tested place
+ * rather than spread through JSX.
+ */
+export function toUserProfile(api: ApiProfile): UserProfile {
+  return {
+    name: api.full_name ?? "",
+    phone: api.phone_number ?? "",
+    email: api.email ?? "",
+    bike: describeBike(api.bikes),
+    ridingLevel: api.riding_level ?? "",
+    location: [api.city, api.state].filter(Boolean).join(", "),
+    emergencyContact: {
+      name: api.emergency_contact?.name ?? "",
+      phone: api.emergency_contact?.phone ?? "",
+      relation: api.emergency_contact?.relation ?? "",
+    },
+  };
+}
+
+/**
+ * `UserProfile` → the body POST /api/profile expects.
+ *
+ * `location` is split back into city/state on the first comma. Anything the
+ * screen does not edit — username, bio, bikes, riding styles, social links —
+ * is passed through from the row we loaded, because the endpoint upserts the
+ * whole profile and omitting a field would erase it.
+ */
+export function fromUserProfile(
+  form: UserProfile,
+  existing: ApiProfile
+): Record<string, unknown> {
+  const [city, state] = form.location.split(",").map((part) => part.trim());
+
+  return {
+    // Required by ProfileSchema, and not editable on this screen.
+    username: existing.username ?? "",
+    full_name: form.name,
+    phone_number: form.phone || undefined,
+    bio: existing.bio ?? undefined,
+    city: city || undefined,
+    state: state || undefined,
+    country: existing.country ?? undefined,
+    bikes: existing.bikes ?? undefined,
+    riding_level: form.ridingLevel || undefined,
+    emergency_contact:
+      form.emergencyContact.name || form.emergencyContact.phone
+        ? form.emergencyContact
+        : undefined,
   };
 }

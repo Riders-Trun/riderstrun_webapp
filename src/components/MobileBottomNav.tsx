@@ -1,22 +1,31 @@
 import { MapPin, Calendar, Compass, Bell, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useConfig } from "@/contexts/ConfigContext";
 
 const navItems = [
   { icon: MapPin, label: "Discover", path: "/" },
   { icon: Calendar, label: "My Rides", path: "/my-rides" },
-  { icon: Compass, label: "Explore", path: "/explore", isCenter: true },
-  { icon: Bell, label: "Alerts", path: "/notifications" },
+  { icon: Compass, label: "Explore", path: "/explore", isCenter: true, feature: "explore" as const },
+  { icon: Bell, label: "Alerts", path: "/notifications", feature: "notifications" as const },
   { icon: User, label: "Profile", path: "/profile" },
 ];
 
 const MobileBottomNav = () => {
   const location = useLocation();
+  const { isEnabled } = useConfig();
+
+  // Items without a `feature` are core. When Explore is off the raised centre
+  // button disappears with it and the remaining four space themselves evenly —
+  // better than a prominent button leading to a redirect.
+  const visibleItems = navItems.filter(
+    (item) => !("feature" in item) || isEnabled(item.feature)
+  );
 
   return (
     <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-orange-100 z-50">
       <div className="flex items-center justify-around py-2 max-w-screen-xl mx-auto">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
 

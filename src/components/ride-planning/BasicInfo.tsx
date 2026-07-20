@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useConfig } from "@/contexts/ConfigContext";
 
 interface BasicInfoProps {
   formData: {
@@ -15,12 +16,11 @@ interface BasicInfoProps {
 }
 
 const BasicInfo = ({ formData, onFormDataChange }: BasicInfoProps) => {
-  const rideTypes = [
-    { value: "breakfast", label: "Breakfast Ride" },
-    { value: "offroad", label: "Off-road Adventure" },
-    { value: "long", label: "Long Distance" },
-    { value: "beginner", label: "Beginner Friendly" }
-  ];
+  // From the server, which validates against the same list. Declaring these
+  // here meant the form could offer a type the API would reject — the two had
+  // no way to be checked against each other.
+  const { config } = useConfig();
+  const rideTypes = config.enums.rideTypes;
 
   return (
     <Card>

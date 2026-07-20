@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { profileApi } from "@/services/api";
+import { toUserProfile, fromUserProfile, type ApiProfile } from "@/services/adapters";
+import { USE_MOCK } from "@/lib/mock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +52,22 @@ const ProfileScreen = () => {
     mockOr(DEFAULT_PROFILE, { ...EMPTY_PROFILE, email: user?.email ?? "" })
   );
 
+  // The raw row is kept alongside the form because POST /api/profile upserts the
+  // whole profile: fields this screen does not edit (username, bio, bikes,
+  // riding styles, social links) must be sent back or they would be erased.
+  const { data: profileRow } = useQuery({
+    queryKey: ["profile", "me"],
+    queryFn: async () => {
+      const res = await profileApi.getMyProfile();
+      return ((res.data?.profile ?? {}) as ApiProfile);
+    },
+    enabled: !USE_MOCK,
+  });
+
+  useEffect(() => {
+    if (profileRow) setProfile(toUserProfile(profileRow));
+  }, [profileRow]);
+
   const rideStats = mockOr(DEFAULT_RIDE_STATS, EMPTY_RIDE_STATS);
   const streaks = mockOr(STREAKS, []);
   const achievements = mockOr(ACHIEVEMENTS, []);
@@ -58,20 +77,27 @@ const ProfileScreen = () => {
   const { toast } = useToast();
 
   const handleSave = async () => {
+    // The previous version sent `phone`, `bike` and `location`, which the API
+    // does not accept, and omitted `username`, which ProfileSchema requires —
+    // so every save failed validation. fromUserProfile builds the body the
+    // endpoint actually expects.
     try {
-      await profileApi.updateProfile({
-        full_name: profile.name,
-        phone: profile.phone,
-        email: profile.email,
-        bike: profile.bike,
-        riding_level: profile.ridingLevel,
-        location: profile.location,
-      });
+      const res = await profileApi.updateProfile(fromUserProfile(profile, profileRow ?? {}));
+
+      if (res.status !== "success") {
+        throw new Error(res.message ?? "Update failed");
+      }
+
       toast({ title: "Profile updated!", description: "Your changes have been saved." });
+      setIsEditing(false);
     } catch {
-      toast({ title: "Failed to save", description: "Could not update profile.", variant: "destructive" });
+      // Stay in edit mode on failure so the rider's typing is not lost.
+      toast({
+        title: "Failed to save",
+        description: "Could not update profile.",
+        variant: "destructive",
+      });
     }
-    setIsEditing(false);
   };
 
   const getRarityColor = (rarity: string) => {

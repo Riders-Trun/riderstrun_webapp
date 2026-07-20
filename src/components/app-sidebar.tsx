@@ -14,6 +14,7 @@ import {
 import { MapPin, Calendar, Plus, Bell, User, QrCode, Zap, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useConfig } from "@/contexts/ConfigContext";
 
 const menuItems = [
   {
@@ -39,6 +40,9 @@ const menuItems = [
   {
     title: "Notifications",
     url: "/notifications",
+    // Hidden until the server says notifications exist — the route redirects
+    // anyway, and a link to a redirect is a dead end.
+    feature: "notifications" as const,
     icon: Bell,
   },
   {
@@ -53,6 +57,13 @@ export function AppSidebar() {
   // whether the entry point is visible. Without it an admin has no way to reach
   // the screen except by typing the URL.
   const { isAdmin } = useAuth();
+  const { isEnabled } = useConfig();
+
+  // An item with no `feature` is core and always shown; one with a feature
+  // appears only when the server has that feature switched on.
+  const visibleItems = menuItems.filter(
+    (item) => !("feature" in item) || isEnabled(item.feature)
+  );
 
   return (
     <Sidebar className="border-r bg-gradient-to-b from-orange-50 to-white">
@@ -72,7 +83,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-orange-700 font-semibold">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="hover:bg-orange-50 hover:text-orange-700 transition-colors">
                     <Link to={item.url} className="flex items-center gap-3 py-3">

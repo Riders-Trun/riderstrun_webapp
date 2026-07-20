@@ -6,7 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { ConfigProvider } from "@/contexts/ConfigContext";
+import { ConfigProvider, useConfig } from "@/contexts/ConfigContext";
+import type { AppConfig } from "@/config/appConfig";
 import AppLayout from "@/components/layout/AppLayout";
 
 const LoadingSpinner = () => (
@@ -27,6 +28,23 @@ const AdminRoute = () => {
   if (isLoading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
+  return <Outlet />;
+};
+
+/**
+ * Hides a screen the server says is not built yet.
+ *
+ * Some screens have no endpoints behind them, so rendering them shows an empty
+ * shell that reads as broken. Redirecting instead means a feature only appears
+ * once it actually works — and switching one on is a server config change, not
+ * a release.
+ *
+ * Deliberately no loading state: config resolves from cache or bundled defaults
+ * synchronously, so gating never flashes a spinner.
+ */
+const FeatureRoute = ({ feature }: { feature: keyof AppConfig["features"] }) => {
+  const { isEnabled } = useConfig();
+  if (!isEnabled(feature)) return <Navigate to="/" replace />;
   return <Outlet />;
 };
 
@@ -80,10 +98,16 @@ const App = () => (
                     <Route path="/plan-ride" element={<PlanRideScreen />} />
                     <Route path="/location-planner" element={<LocationPlannerScreen />} />
                     <Route path="/travel-diary" element={<TravelDiaryScreen />} />
-                    <Route path="/explore" element={<ExploreScreen />} />
-                    <Route path="/route-discovery/:id" element={<RouteDiscoveryScreen />} />
-                    <Route path="/route-discovery" element={<RouteDiscoveryScreen />} />
-                    <Route path="/notifications" element={<NotificationsScreen />} />
+                    <Route element={<FeatureRoute feature="explore" />}>
+                      <Route path="/explore" element={<ExploreScreen />} />
+                    </Route>
+                    <Route element={<FeatureRoute feature="rideDiscovery" />}>
+                      <Route path="/route-discovery/:id" element={<RouteDiscoveryScreen />} />
+                      <Route path="/route-discovery" element={<RouteDiscoveryScreen />} />
+                    </Route>
+                    <Route element={<FeatureRoute feature="notifications" />}>
+                      <Route path="/notifications" element={<NotificationsScreen />} />
+                    </Route>
                     <Route path="/profile" element={<ProfileScreen />} />
                   </Route>
                 </Route>
