@@ -1,4 +1,4 @@
-import type { Ride, MyRide, UserProfile } from "@/types";
+import type { Ride, MyRide, UserProfile, Notification } from "@/types";
 
 /**
  * Translates backend ride rows into the view models the UI renders.
@@ -261,5 +261,64 @@ export function fromUserProfile(
       form.emergencyContact.name || form.emergencyContact.phone
         ? form.emergencyContact
         : undefined,
+  };
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+/** The notification row as the API returns it. */
+export interface ApiNotification {
+  id: string;
+  type: string;
+  title: string;
+  body?: string | null;
+  actor_name?: string | null;
+  ride_id?: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+/** "2h ago" — coarse on purpose; an exact timestamp is noise in a list. */
+export function relativeTime(iso?: string | null): string {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+
+  const seconds = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (seconds < 60) return "just now";
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+
+  return new Date(iso).toLocaleDateString();
+}
+
+/** What tapping a notification offers to do, by type. */
+const NOTIFICATION_ACTIONS: Record<string, string> = {
+  ride_join_request: "Review request",
+  ride_join_approved: "View ride",
+  ride_comment: "View comment",
+  ride_completed: "View ride",
+  connection_request: "View request",
+  connection_accepted: "View profile",
+};
+
+/** Backend notification → the `Notification` the screen renders. */
+export function toNotification(api: ApiNotification): Notification {
+  return {
+    id: api.id,
+    type: api.type as Notification["type"],
+    title: api.title,
+    // The actor's name is the useful detail when there is no body text.
+    message: api.body ?? (api.actor_name ? `From ${api.actor_name}` : ""),
+    time: relativeTime(api.created_at),
+    isRead: api.is_read,
+    action: NOTIFICATION_ACTIONS[api.type] ?? "View",
   };
 }

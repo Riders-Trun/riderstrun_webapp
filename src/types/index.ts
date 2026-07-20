@@ -177,10 +177,25 @@ export interface RecentRide {
 
 // ===== Notification Types =====
 
-export type NotificationType = "reminder" | "update" | "delay" | "new_ride" | "rider_joined";
+// The server's types come first — these are what /api/notifications actually
+// returns. The rest are demo-only categories the mock data still uses.
+export type NotificationType =
+  | "ride_join_request"
+  | "ride_join_approved"
+  | "ride_comment"
+  | "ride_completed"
+  | "connection_request"
+  | "connection_accepted"
+  | "reminder"
+  | "update"
+  | "delay"
+  | "new_ride"
+  | "rider_joined";
 
 export interface Notification {
-  id: number;
+  // String on the wire: the API issues UUIDs. Demo data uses numbers, so both
+  // are accepted rather than coercing one into the other.
+  id: string | number;
   type: NotificationType;
   title: string;
   message: string;

@@ -2,24 +2,60 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Bell, Clock, MapPin, Users, AlertCircle, CheckCircle, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import GlobalHeader from "@/components/GlobalHeader";
 import { MOCK_NOTIFICATIONS } from "@/data/notifications";
-import { mockOr } from "@/lib/mock";
+import { mockOr, USE_MOCK } from "@/lib/mock";
+import { notificationsApi } from "@/services/api";
+import { toNotification, type ApiNotification } from "@/services/adapters";
 
 const NotificationsScreen = () => {
-  // Demo-only: no /api/notifications exists yet, so this screen is empty
-  // against a real backend until one does.
   const [notifications, setNotifications] = useState(mockOr(MOCK_NOTIFICATIONS, []));
+  const queryClient = useQueryClient();
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
+  const { data } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await notificationsApi.list();
+      return ((res.data?.notifications ?? []) as ApiNotification[]).map(toNotification);
+    },
+    enabled: !USE_MOCK,
+  });
+
+  useEffect(() => {
+    if (data) setNotifications(data);
+  }, [data]);
+
+  /** The header badge reads the same count, so it has to be refreshed too. */
+  const refreshBadge = () => {
+    queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
   };
 
-  const markAsRead = (id: number) => {
+  const markAllAsRead = async () => {
+    // Optimistic: marking read is not worth a spinner, and a failure only means
+    // the next load shows them unread again.
+    setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
+    if (USE_MOCK) return;
+
+    try {
+      await notificationsApi.markAllRead();
+    } finally {
+      refreshBadge();
+    }
+  };
+
+  const markAsRead = async (id: string | number) => {
     setNotifications(prev => prev.map(notif =>
       notif.id === id ? { ...notif, isRead: true } : notif
     ));
+    if (USE_MOCK) return;
+
+    try {
+      await notificationsApi.markRead(String(id));
+    } finally {
+      refreshBadge();
+    }
   };
 
   const getNotificationIcon = (type: string) => {

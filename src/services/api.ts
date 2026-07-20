@@ -156,6 +156,24 @@ export const profileApi = {
     ),
 };
 
+export const notificationsApi = {
+  list: (limit = 20, offset = 0) =>
+    request<ApiResponse<{ notifications: unknown[]; meta: { unread: number } }>>(
+      `/api/notifications?limit=${limit}&offset=${offset}`
+    ),
+  // Just the badge — the header needs the number, not the list.
+  unreadCount: () =>
+    request<ApiResponse<{ unread: number }>>("/api/notifications/unread-count"),
+  markRead: (id: string) =>
+    request<ApiResponse<null>>(`/api/notifications/${encodeURIComponent(id)}/read`, {
+      method: "POST",
+    }),
+  markAllRead: () =>
+    request<ApiResponse<{ updated: number }>>("/api/notifications/read-all", {
+      method: "POST",
+    }),
+};
+
 // Rides API
 export const ridesApi = {
   // `mine: true` switches to the caller's own rides (needs a token); the public
