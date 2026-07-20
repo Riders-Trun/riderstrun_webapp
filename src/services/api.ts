@@ -1,3 +1,5 @@
+import type { AppConfig } from "@/config/appConfig";
+
 // In dev, Vite proxy forwards /api to localhost:3000
 // In prod, set VITE_API_URL to backend URL
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -246,6 +248,17 @@ export const healthApi = {
     request<ApiResponse<Record<string, unknown>>>("/api/health/dependencies", { skipAuth: true }),
   metrics: () =>
     request<ApiResponse<Record<string, unknown>>>("/api/admin/metrics"),
+};
+
+/**
+ * Server-owned option lists, limits and feature flags.
+ *
+ * `skipAuth` because the app needs this before anyone signs in — the sign-in
+ * screen itself renders from it.
+ */
+export const configApi = {
+  get: () =>
+    request<ApiResponse<AppConfig>>("/api/config", { skipAuth: true }),
 };
 
 // Generic API (backward compat)

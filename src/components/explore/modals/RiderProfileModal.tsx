@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { mockOr } from "@/lib/mock";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -42,8 +43,10 @@ const RiderProfileModal = ({
   const [activeTab, setActiveTab] = useState("about");
   const [isConnected, setIsConnected] = useState(false);
 
-  // Mock rider data - in real app, fetch based on riderId
-  const rider = {
+  // Demo-only: there is no endpoint that returns a rider profile by id yet, so
+  // outside mock mode this shows an empty shell rather than "Arjun Patel" and
+  // 89 rides belonging to whoever was actually tapped.
+  const DEMO_RIDER = {
     id: riderId,
     name: "Arjun Patel",
     avatar: "/api/placeholder/100/100",
@@ -93,6 +96,30 @@ const RiderProfileModal = ({
       { name: "Sneha", avatar: "/api/placeholder/30/30" }
     ]
   };
+
+  const rider = mockOr(DEMO_RIDER, {
+    ...DEMO_RIDER,
+    name: "",
+    bio: "",
+    bike: "",
+    location: "",
+    points: 0,
+    streak: 0,
+    joinedDate: "",
+    isOnline: false,
+    badges: [],
+    stats: {
+      ridesCompleted: 0,
+      distanceCovered: "0 km",
+      averageRating: 0,
+      followers: 0,
+      following: 0,
+    },
+    rideStyle: [],
+    preferences: { timePreference: [], difficulty: [], groupSize: "" },
+    recentRides: [],
+    mutualConnections: [],
+  });
 
   const handleConnect = () => {
     setIsConnected(true);

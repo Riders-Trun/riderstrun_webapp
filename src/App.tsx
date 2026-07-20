@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ConfigProvider } from "@/contexts/ConfigContext";
 import AppLayout from "@/components/layout/AppLayout";
 
 const LoadingSpinner = () => (
@@ -56,6 +57,9 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
+      {/* Outside AuthProvider: config is public and the sign-in screen renders
+          from it, so it must not depend on being authenticated. */}
+      <ConfigProvider>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
@@ -89,6 +93,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
+      </ConfigProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );
