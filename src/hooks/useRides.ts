@@ -79,9 +79,28 @@ export const useCreateRide = () => {
 export const useJoinRide = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (rideId: string) => ridesApi.join(rideId),
+    // `tripCode` is only needed for invite-only rides; the server ignores it otherwise.
+    mutationFn: ({ rideId, tripCode }: { rideId: string; tripCode?: string }) =>
+      ridesApi.join(rideId, tripCode),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rides"] });
     },
   });
 };
+
+/**
+ * Look up a ride by its invite code.
+ *
+ * A mutation rather than a query: it runs when the rider submits a code, not on
+ * render, and firing a rate-limited lookup on every keystroke would burn the
+ * budget the server sets aside for a real attempt.
+ */
+export const useRideByTripCode = () =>
+  useMutation({
+    mutationFn: async (code: string) => {
+      const res = await ridesApi.lookupByCode(code);
+      const ride = res.data?.ride;
+      if (!ride) throw new Error("No ride found for that trip code");
+      return ride as { id: string; title?: string };
+    },
+  });

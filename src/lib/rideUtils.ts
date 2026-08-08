@@ -73,3 +73,68 @@ export const stableSeed = (id: string | number): number => {
   }
   return Math.abs(hash);
 };
+
+/**
+ * Kilometres out of a display distance like "80 km round trip" or "280 km".
+ *
+ * Returns null when there is no number to find, so callers can decide what an
+ * unknown distance means rather than silently treating it as zero.
+ */
+export const parseDistanceKm = (distance: string | undefined): number | null => {
+  if (!distance) return null;
+  const match = distance.match(/\d+(\.\d+)?/);
+  if (!match) return null;
+  const km = parseFloat(match[0]);
+  return Number.isFinite(km) ? km : null;
+};
+
+/**
+ * When a ride starts, as epoch milliseconds, for the "earliest" sort.
+ *
+ * `date` is a display label — "Today, 6:00 AM", "Tomorrow, 5:30 AM" — and
+ * `new Date()` cannot parse either, so sorting on it produced NaN and left the
+ * list in its original order. Prefer the API's ISO `startDate`; fall back to
+ * resolving the relative labels against the current day. Anything still
+ * unreadable sorts last instead of poisoning the comparator.
+ */
+export const rideStartTime = (ride: { startDate?: string; date?: string }): number => {
+  if (ride.startDate) {
+    const t = new Date(ride.startDate).getTime();
+    if (Number.isFinite(t)) return t;
+  }
+
+  const label = ride.date;
+  if (!label) return Number.POSITIVE_INFINITY;
+
+  const [dayPart, timePart] = label.split(", ");
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+
+  if (/today/i.test(dayPart)) {
+    // base is already today
+  } else if (/tomorrow/i.test(dayPart)) {
+    base.setDate(base.getDate() + 1);
+  } else {
+    const parsed = new Date(label);
+    const t = parsed.getTime();
+    return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+  }
+
+  return base.getTime() + parseClockOffset(timePart);
+};
+
+/** Milliseconds past midnight for a "6:00 AM" style time; 0 when absent. */
+function parseClockOffset(time: string | undefined): number {
+  if (!time) return 0;
+  const match = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return 0;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const meridiem = match[3]?.toUpperCase();
+
+  if (meridiem === "PM" && hours !== 12) hours += 12;
+  if (meridiem === "AM" && hours === 12) hours = 0;
+
+  return (hours * 60 + minutes) * 60 * 1000;
+}

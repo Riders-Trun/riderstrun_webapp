@@ -10,8 +10,11 @@ import FadeIn from "@/components/ui/FadeIn";
 import { useFilters } from "@/hooks/useFilters";
 import { useRides } from "@/hooks/useRides";
 import { RIDE_TYPES } from "@/constants";
-import { stableSeed } from "@/lib/rideUtils";
+import { parseDistanceKm, rideStartTime, stableSeed } from "@/lib/rideUtils";
 import type { Ride } from "@/types";
+
+/** Top of the Distance Range slider — at 100 the label reads "100km+", i.e. no upper bound. */
+const RANGE_MAX_KM = 100;
 
 /**
  * Recency rank for the "newest" sort. Ride ids are UUIDs from the API, so the
@@ -63,7 +66,18 @@ const HomeScreen = () => {
       (filters.bikeCC === "250-500" && rideMinCC >= 250 && rideMinCC < 500) ||
       (filters.bikeCC === "500+" && rideMinCC >= 500);
 
-    const matchesGroupSize = ride.joinedCount >= filters.groupSize[0] && ride.joinedCount <= filters.groupSize[1];
+    // Capacity, not headcount: filtering on how many have already joined makes a
+    // ride drop out of its own bucket as riders sign up.
+    const matchesGroupSize =
+      ride.maxRiders >= filters.groupSize[0] && ride.maxRiders <= filters.groupSize[1];
+
+    // A ride whose distance we cannot read stays visible rather than silently
+    // disappearing; at the top of the slider the range is open-ended ("100km+").
+    const rideKm = parseDistanceKm(ride.distance);
+    const matchesRange =
+      rideKm === null ||
+      (rideKm >= filters.range[0] &&
+        (filters.range[1] >= RANGE_MAX_KM || rideKm <= filters.range[1]));
 
     const matchesDuration = filters.duration === "any" ||
       (filters.duration === "half-day" && parseInt(ride.distance) <= 50) ||
@@ -74,13 +88,13 @@ const HomeScreen = () => {
     const matchesRideType = filters.rideType.length === 0 ||
       filters.rideType.some(type => ride.type.toLowerCase().includes(type));
 
-    return matchesFilter && matchesSearch && matchesCC && matchesGroupSize && matchesDuration && matchesRideType;
+    return matchesFilter && matchesSearch && matchesCC && matchesGroupSize && matchesRange && matchesDuration && matchesRideType;
   }), [rides, selectedFilter, searchQuery, filters]);
 
   const sortedRides = useMemo(() => [...filteredRides].sort((a, b) => {
     switch (filters.sortBy) {
       case "earliest":
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
+        return rideStartTime(a) - rideStartTime(b);
       case "popular":
         return b.joinedCount - a.joinedCount;
       case "newest":

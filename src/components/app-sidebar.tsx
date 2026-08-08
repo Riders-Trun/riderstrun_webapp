@@ -11,7 +11,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { MapPin, Calendar, Plus, Bell, User, QrCode, Zap, Shield } from "lucide-react";
+import { MapPin, Calendar, Plus, Bell, User, QrCode, Zap, Shield, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useConfig } from "@/contexts/ConfigContext";
@@ -56,13 +56,13 @@ export function AppSidebar() {
   // The /admin route is guarded server-side and by AdminRoute; this only decides
   // whether the entry point is visible. Without it an admin has no way to reach
   // the screen except by typing the URL.
-  const { isAdmin } = useAuth();
+  const { isAdmin, logout } = useAuth();
   const { isEnabled } = useConfig();
 
   // An item with no `feature` is core and always shown; one with a feature
   // appears only when the server has that feature switched on.
   const visibleItems = menuItems.filter(
-    (item) => !("feature" in item) || isEnabled(item.feature)
+    (item) => item.feature === undefined || isEnabled(item.feature)
   );
 
   return (
@@ -116,6 +116,16 @@ export function AppSidebar() {
         )}
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-orange-100">
+        {/* The only way out on desktop — ProfileScreen carries the mobile one,
+            since the bottom nav replaces this sidebar on small screens. */}
+        <button
+          type="button"
+          onClick={() => logout()}
+          className="flex items-center justify-center gap-2 w-full mb-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </button>
         <div className="text-center">
           <div className="text-xs text-orange-600 font-medium mb-1">
             🏍️ Discover • Join • Ride 🏍️

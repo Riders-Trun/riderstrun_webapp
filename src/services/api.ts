@@ -32,9 +32,9 @@ async function refreshAccessToken(): Promise<string | null> {
 
 async function request<T>(
   endpoint: string,
-  options?: RequestInit & { skipAuth?: boolean }
+  options?: RequestInit & { skipAuth?: boolean; allowStatuses?: number[] }
 ): Promise<T> {
-  const { skipAuth, ...fetchOptions } = options || {};
+  const { skipAuth, allowStatuses, ...fetchOptions } = options || {};
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -64,7 +64,11 @@ async function request<T>(
     }
   }
 
-  if (!res.ok) {
+  // Some endpoints answer a non-2xx with a body worth reading rather than an
+  // error worth throwing: /api/health reports 503 *and* describes the
+  // degradation. Throwing there would leave the caller unable to tell a sick
+  // server apart from an absent one.
+  if (!res.ok && !allowStatuses?.includes(res.status)) {
     const errorData = await res.json().catch(() => null);
     const message = errorData?.message || `API error: ${res.status} ${res.statusText}`;
     throw new ApiError(message, res.status, errorData);
@@ -198,10 +202,25 @@ export const ridesApi = {
     request<ApiResponse<{ ride: Record<string, unknown>; participants: Record<string, unknown>[] }>>(
       `/api/rides/${encodeURIComponent(id)}`
     ),
-  join: (id: string) =>
+  /**
+   * Resolve an invite code to the ride it opens.
+   *
+   * The join endpoint needs a ride id, and someone holding only a trip code has
+   * no way to get one — this is that step. Returns identity fields only, and is
+   * rate-limited server-side, so it cannot be used to enumerate rides.
+   */
+  lookupByCode: (code: string) =>
+    request<ApiResponse<{ ride: Record<string, unknown> }>>(
+      `/api/rides/by-code/${encodeURIComponent(code)}`
+    ),
+  // `tripCode` is required for invite-only rides and ignored for public ones.
+  join: (id: string, tripCode?: string) =>
     request<ApiResponse<Record<string, unknown>>>(
       `/api/rides/${encodeURIComponent(id)}/join`,
-      { method: "POST" }
+      {
+        method: "POST",
+        ...(tripCode ? { body: JSON.stringify({ trip_code: tripCode }) } : {}),
+      }
     ),
   complete: (id: string) =>
     request<ApiResponse<Record<string, unknown>>>(
@@ -257,13 +276,44 @@ export const socialApi = {
 };
 
 // Health API
+//
+// Health endpoints are deliberately unenveloped — they answer with the payload
+// at the top level rather than `{ status: 'success', data }` like every other
+// route, so a probe never has to unwrap. Typed flat to match; reading `.data`
+// off these yields undefined and reports a healthy server as unreachable.
+export interface HealthCheck {
+  status: string;
+  uptime: number;
+  timestamp: string;
+  memory: {
+    rss_mb: number;
+    heap_used_mb: number;
+    heap_total_mb: number;
+    external_mb: number;
+  };
+  database: { connected: boolean; latency_ms: number };
+}
+
+export interface DbHealthCheck {
+  status: string;
+  connected: boolean;
+  latency_ms: number;
+  pool: { total: number; idle: number; waiting: number };
+}
+
 export const healthApi = {
-  check: () =>
-    request<ApiResponse<Record<string, unknown>>>("/api/health", { skipAuth: true }),
+  // 503 is the degraded answer, not a failure to answer — the body still carries
+  // uptime, memory and the database verdict, which is exactly what the admin
+  // System tab exists to show. Only a thrown error means genuinely unreachable.
+  check: () => request<HealthCheck>("/api/health", { skipAuth: true, allowStatuses: [503] }),
   dbCheck: () =>
-    request<ApiResponse<Record<string, unknown>>>("/api/health/db", { skipAuth: true }),
+    request<DbHealthCheck>("/api/health/db", { skipAuth: true, allowStatuses: [503] }),
   dependencies: () =>
-    request<ApiResponse<Record<string, unknown>>>("/api/health/dependencies", { skipAuth: true }),
+    request<{ status: string; dependencies: unknown[] }>("/api/health/dependencies", {
+      skipAuth: true,
+      allowStatuses: [503],
+    }),
+  // Enveloped, unlike the checks above — /api/admin/metrics goes through sendSuccess.
   metrics: () =>
     request<ApiResponse<Record<string, unknown>>>("/api/admin/metrics"),
 };

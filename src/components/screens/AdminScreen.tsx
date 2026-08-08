@@ -74,19 +74,6 @@ interface DashboardStats {
   newUsersThisWeek: number;
 }
 
-interface HealthData {
-  status: string;
-  data?: {
-    status: string;
-    uptime: number;
-    memory: {
-      rss_mb: number;
-      heap_used_mb: number;
-      heap_total_mb: number;
-    };
-  };
-}
-
 const AdminScreen = () => {
   const { isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -513,8 +500,9 @@ const SystemTab = () => {
     retry: false,
   });
 
-  const health = (healthRes as HealthData)?.data;
-  const db = (dbRes as unknown as { status: string; data?: { connected: boolean; latency_ms: number; pool: { total: number; idle: number; waiting: number } } })?.data;
+  // Flat, not enveloped — see healthApi in services/api.ts.
+  const health = healthRes;
+  const db = dbRes;
 
   return (
     <div className="space-y-4">

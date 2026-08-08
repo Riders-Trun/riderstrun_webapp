@@ -16,6 +16,12 @@ export interface Ride {
   distanceFromUser?: string;
   /** ISO timestamp from the API, used for "newest" sorting. Absent in mock data. */
   createdAt?: string;
+  /**
+   * ISO start timestamp from the API, used for "earliest" sorting. `date` above
+   * is a display label ("Today, 6:00 AM") that no date parser accepts. Absent in
+   * mock data, where the label is parsed instead.
+   */
+  startDate?: string;
   pillionAvailable?: boolean;
   pillionSlots?: number;
   tripCode?: string;

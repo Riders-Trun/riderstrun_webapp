@@ -19,7 +19,7 @@ const MobileBottomNav = () => {
   // button disappears with it and the remaining four space themselves evenly —
   // better than a prominent button leading to a redirect.
   const visibleItems = navItems.filter(
-    (item) => !("feature" in item) || isEnabled(item.feature)
+    (item) => item.feature === undefined || isEnabled(item.feature)
   );
 
   return (

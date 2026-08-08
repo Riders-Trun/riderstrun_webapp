@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, MapPin, Award, Calendar, Edit3, Flame, Trophy, Target, Star, Zap, Shield, Phone, Bike, Mail, ChevronRight } from "lucide-react";
+import { User, MapPin, Award, Calendar, Edit3, Flame, Trophy, Target, Star, Zap, Shield, Phone, Bike, Mail, ChevronRight, LogOut } from "lucide-react";
 import GlobalHeader from "@/components/GlobalHeader";
 import { DEFAULT_PROFILE, DEFAULT_RIDE_STATS, STREAKS, ACHIEVEMENTS, RECENT_RIDES, CHALLENGES } from "@/data/profile";
 import { mockOr } from "@/lib/mock";
@@ -47,7 +47,7 @@ const EMPTY_RIDE_STATS: RideStats = {
 
 const ProfileScreen = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [profile, setProfile] = useState(
     mockOr(DEFAULT_PROFILE, { ...EMPTY_PROFILE, email: user?.email ?? "" })
   );
@@ -473,6 +473,17 @@ const ProfileScreen = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Sign out — the mobile counterpart to the sidebar footer, which is not
+            rendered at this breakpoint. Without it a phone user cannot log out. */}
+        <Button
+          variant="outline"
+          onClick={() => logout()}
+          className="w-full h-11 text-gray-600 border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign out
+        </Button>
       </div>
     </div>
   );

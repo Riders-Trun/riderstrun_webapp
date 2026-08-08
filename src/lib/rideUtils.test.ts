@@ -6,6 +6,8 @@ import {
   getTimeUntilRide,
   getRideTypeEmoji,
   formatRideDate,
+  parseDistanceKm,
+  rideStartTime,
 } from './rideUtils';
 
 describe('getDifficultyColor', () => {
@@ -93,5 +95,71 @@ describe('formatRideDate', () => {
     const result = formatRideDate('March 15, 8:00 AM');
     expect(result.label).toBe('March 15');
     expect(result.isRegular).toBe(true);
+  });
+});
+
+describe('parseDistanceKm', () => {
+  it('reads the number out of a display distance', () => {
+    expect(parseDistanceKm('80 km round trip')).toBe(80);
+    expect(parseDistanceKm('280 km')).toBe(280);
+    expect(parseDistanceKm('12.5 km')).toBe(12.5);
+  });
+
+  it('returns null when there is no number to find', () => {
+    expect(parseDistanceKm('unknown')).toBeNull();
+    expect(parseDistanceKm('')).toBeNull();
+    expect(parseDistanceKm(undefined)).toBeNull();
+  });
+});
+
+describe('rideStartTime', () => {
+  const startOfToday = () => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+
+  it('prefers the ISO startDate when the API supplied one', () => {
+    const iso = '2026-03-15T04:30:00.000Z';
+    expect(rideStartTime({ startDate: iso, date: 'Today, 6:00 AM' })).toBe(
+      new Date(iso).getTime()
+    );
+  });
+
+  it('resolves the Today label against the current day', () => {
+    const sixAm = 6 * 60 * 60 * 1000;
+    expect(rideStartTime({ date: 'Today, 6:00 AM' })).toBe(startOfToday() + sixAm);
+  });
+
+  it('resolves Tomorrow a day later than Today', () => {
+    const today = rideStartTime({ date: 'Today, 6:00 AM' });
+    const tomorrow = rideStartTime({ date: 'Tomorrow, 6:00 AM' });
+    expect(tomorrow - today).toBe(24 * 60 * 60 * 1000);
+  });
+
+  it('handles PM times and 12-hour edge cases', () => {
+    const base = startOfToday();
+    expect(rideStartTime({ date: 'Today, 1:00 PM' })).toBe(base + 13 * 60 * 60 * 1000);
+    expect(rideStartTime({ date: 'Today, 12:00 AM' })).toBe(base);
+    expect(rideStartTime({ date: 'Today, 12:30 PM' })).toBe(base + 12.5 * 60 * 60 * 1000);
+  });
+
+  it('sorts unreadable dates last instead of returning NaN', () => {
+    expect(rideStartTime({ date: 'sometime soon' })).toBe(Number.POSITIVE_INFINITY);
+    expect(rideStartTime({})).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('orders Today before Tomorrow when used as a comparator', () => {
+    const rides = [
+      { date: 'Tomorrow, 5:30 AM' },
+      { date: 'Today, 6:00 AM' },
+      { date: 'not a date' },
+    ];
+    const sorted = [...rides].sort((a, b) => rideStartTime(a) - rideStartTime(b));
+    expect(sorted.map((r) => r.date)).toEqual([
+      'Today, 6:00 AM',
+      'Tomorrow, 5:30 AM',
+      'not a date',
+    ]);
   });
 });

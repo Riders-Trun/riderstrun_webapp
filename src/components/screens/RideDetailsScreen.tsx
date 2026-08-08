@@ -10,8 +10,10 @@ import { useSimulatedLoading } from "@/hooks/useLoading";
 import RideDetailsSkeleton from "./RideDetailsSkeleton";
 import PreviousTripsSection from "@/components/ride-details/PreviousTripsSection";
 import { mockRideDetails } from "@/data/rideDetails";
-import { mockOr } from "@/lib/mock";
-import { useRideById } from "@/hooks/useRides";
+import { mockOr, USE_MOCK } from "@/lib/mock";
+import { useRideById, useJoinRide } from "@/hooks/useRides";
+import { joinErrorMessage } from "@/lib/joinErrors";
+import { useToast } from "@/hooks/use-toast";
 import {
   MapPin, Clock, Users, Shield, Phone, CheckCircle, AlertTriangle,
   Star, MessageCircle, Cloud, Thermometer, Route, TrendingUp,
@@ -53,6 +55,8 @@ const RideDetailsScreen = () => {
   const { data: apiRide, isLoading: apiLoading } = useRideById(id ?? "");
   const [isJoined, setIsJoined] = useState(false);
   const [showAllPreviousTrips, setShowAllPreviousTrips] = useState(false);
+  const joinRide = useJoinRide();
+  const { toast } = useToast();
 
   // Use API data when available, otherwise fall back to mock.
   //
@@ -64,7 +68,7 @@ const RideDetailsScreen = () => {
   // Outside mock mode there is no fabricated fallback: if the API has no ride,
   // the sections below simply render nothing (each is already conditional)
   // rather than showing another ride's costs, route and reviews.
-  const ride: RideDetailView = apiRide ?? mockOr(mockRideDetails, {} as RideDetailView);
+  const ride: RideDetailView = apiRide ?? mockOr<RideDetailView>(mockRideDetails, {} as RideDetailView);
   const isLoading = simulatedLoading || apiLoading;
 
   const reviews = ride.reviews ?? [];
@@ -72,7 +76,36 @@ const RideDetailsScreen = () => {
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : null;
 
-  const handleJoinRide = () => setIsJoined(true);
+  /**
+   * Joining used to be `setIsJoined(true)` — the button reported success without
+   * telling the backend anything, so nobody was ever actually on the ride.
+   *
+   * No trip code is sent from here: this screen is reached from the feed, which
+   * only carries public rides. An invite-only ride is joined from the Join
+   * screen, where the rider has supplied the code.
+   */
+  const handleJoinRide = async () => {
+    if (USE_MOCK) {
+      setIsJoined(true);
+      return;
+    }
+    if (!id) return;
+
+    try {
+      await joinRide.mutateAsync({ rideId: id });
+      setIsJoined(true);
+      toast({ title: "🎉 You're in!", description: `Joined ${ride.title}` });
+    } catch (err) {
+      const { code, title, description } = joinErrorMessage(err);
+      // Already a participant — the button was just out of date.
+      if (code === "ALREADY_JOINED") {
+        setIsJoined(true);
+        toast({ title, description });
+        return;
+      }
+      toast({ title, description, variant: "destructive" });
+    }
+  };
   const handleContactOrganizer = () => {
     if (ride.organizerPhone) window.open(`tel:${ride.organizerPhone}`);
   };
@@ -378,11 +411,13 @@ const RideDetailsScreen = () => {
                   className="w-full bg-orange-500 hover:bg-orange-600"
                   size="lg"
                   onClick={handleJoinRide}
-                  disabled={ride.joinedCount >= ride.maxRiders}
+                  disabled={ride.joinedCount >= ride.maxRiders || joinRide.isPending}
                 >
                   {ride.joinedCount >= ride.maxRiders
                     ? "Ride Full"
-                    : "Join Ride (Free)"}
+                    : joinRide.isPending
+                      ? "Joining…"
+                      : "Join Ride (Free)"}
                 </Button>
                 <div className="text-xs text-center text-gray-500">
                   {ride.maxRiders - ride.joinedCount} spots left • Free cancellation

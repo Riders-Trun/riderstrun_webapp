@@ -111,6 +111,9 @@ export function toRide(api: ApiRide, currentUserId?: number): Ride {
     tripCode: api.trip_code ?? undefined,
     brand: api.brand_filter ?? undefined,
     createdAt: api.created_at,
+    // Kept alongside the formatted `date` label so "earliest" can sort on a real
+    // timestamp instead of trying to parse "Today, 6:00 AM".
+    startDate: api.start_date,
   };
 }
 

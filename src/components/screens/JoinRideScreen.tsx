@@ -1,4 +1,4 @@
-import { mockOr } from "@/lib/mock";
+import { mockOr, USE_MOCK } from "@/lib/mock";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,29 +9,62 @@ import { QrCode, Hash, ArrowLeft, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { SUGGESTED_TRIP_CODES } from "@/constants";
+import { useJoinRide, useRideByTripCode } from "@/hooks/useRides";
+import { joinErrorMessage } from "@/lib/joinErrors";
 
 const JoinRideScreen = () => {
   const [tripCode, setTripCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const lookupByCode = useRideByTripCode();
+  const joinRide = useJoinRide();
 
+  /**
+   * Two calls, not one: the code identifies the ride, then the ride is joined
+   * with the code as proof of invitation. The server has no single endpoint for
+   * this because the code alone is not an authorisation to read a ride.
+   */
   const handleJoinRideWithCode = async (code: string) => {
-    if (!code.trim()) return;
+    const trimmed = code.trim();
+    if (!trimmed) return;
+
     setIsLoading(true);
     toast({
       title: "🔍 Searching for ride...",
-      description: `Looking for ride with code: ${code}`
+      description: `Looking for ride with code: ${trimmed}`,
     });
-    // Simulate API call — replace setTimeout with real ridesApi lookup when available
-    setTimeout(() => {
-      toast({
-        title: "🎉 Ride Found!",
-        description: "Redirecting to ride details..."
-      });
+
+    // No backend in mock mode — the demo codes resolve to the built-in ride.
+    if (USE_MOCK) {
       setIsLoading(false);
-      navigate(`/ride/${code}`);
-    }, 1500);
+      navigate(`/ride/${trimmed}`);
+      return;
+    }
+
+    try {
+      const ride = await lookupByCode.mutateAsync(trimmed);
+
+      try {
+        await joinRide.mutateAsync({ rideId: String(ride.id), tripCode: trimmed });
+        toast({
+          title: "🎉 You're in!",
+          description: ride.title ? `Joined ${ride.title}` : "Redirecting to ride details...",
+        });
+      } catch (joinErr) {
+        const { code, title, description } = joinErrorMessage(joinErr);
+        // Already a participant is not a failure — the rider still wants the ride.
+        if (code !== "ALREADY_JOINED") throw joinErr;
+        toast({ title, description });
+      }
+
+      navigate(`/ride/${ride.id}`);
+    } catch (err) {
+      const { title, description } = joinErrorMessage(err);
+      toast({ title, description, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleJoinRide = () => handleJoinRideWithCode(tripCode);
