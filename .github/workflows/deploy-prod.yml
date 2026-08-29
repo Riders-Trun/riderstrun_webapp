@@ -33,6 +33,19 @@ jobs:
       - name: Pull Vercel project settings & env vars
         run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
+      # VITE_USE_MOCK defaults to ON (src/lib/mock.ts reads `!== 'false'`), so a
+      # deploy that says nothing ships an app full of demo rides that never calls
+      # the API. Pinned here rather than in a job-level `env:` because
+      # `vercel build` has no --build-env flag and injects the values it pulled,
+      # which would override the shell. Delete-then-append so the result does not
+      # depend on duplicate-key precedence if the dashboard also sets it.
+      - name: Force real API mode
+        run: |
+          ENV_FILE=.vercel/.env.production.local
+          touch "$ENV_FILE"
+          sed -i '/^VITE_USE_MOCK=/d' "$ENV_FILE"
+          echo "VITE_USE_MOCK=false" >> "$ENV_FILE"
+
       - name: Build project
         run: vercel build --prod --token=$VERCEL_TOKEN
 
