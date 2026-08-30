@@ -85,7 +85,7 @@ const PhotosTab = ({ photos }: PhotosTabProps) => (
               <p className="text-xs text-gray-500">{photo.time}</p>
             </div>
 
-            {photo.comments > 0 && (
+            {(photo.comments ?? 0) > 0 && (
               <Button variant="ghost" size="sm" className="h-6 px-0 text-gray-500 text-xs">
                 View all {photo.comments} comments
               </Button>

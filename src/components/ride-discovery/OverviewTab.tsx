@@ -33,7 +33,7 @@ const OverviewTab = ({ pastGroups, tips }: OverviewTabProps) => (
               </div>
             </div>
             <div className="flex flex-wrap gap-1">
-              {group.highlights.map((highlight, idx) => (
+              {(group.highlights ?? []).map((highlight, idx) => (
                 <Badge key={idx} variant="secondary" className="text-xs bg-white">
                   {highlight}
                 </Badge>

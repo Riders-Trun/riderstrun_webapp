@@ -624,6 +624,96 @@ export const communityApi = {
     ),
 };
 
+/**
+ * Routes — a named way of getting somewhere, saved so it can be ridden again.
+ *
+ * `completed_rides` is the only popularity figure with a source behind it. The
+ * planner's mock showed a rating and a review count; nothing collects either.
+ */
+export interface ApiRouteStop {
+  id: string;
+  position: number;
+  name: string;
+  stop_type: "start" | "checkpoint" | "fuel" | "food" | "destination";
+  arrival_time: string | null;
+  description: string | null;
+}
+
+export interface ApiRoute {
+  id: string;
+  creator_id: number;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  name: string;
+  description: string | null;
+  start_location: string;
+  end_location: string;
+  distance_km: number | null;
+  difficulty: "Easy" | "Moderate" | "Hard" | null;
+  best_time: string | null;
+  estimated_time: string | null;
+  tags: string[];
+  is_public: boolean;
+  completed_rides: number;
+  created_at: string;
+}
+
+export interface ApiRouteDiscovery {
+  route: ApiRoute;
+  stops: ApiRouteStop[];
+  past_rides: {
+    id: string;
+    title: string;
+    start_date: string;
+    organizer_id: number;
+    full_name: string | null;
+    username: string | null;
+    participant_count: number;
+  }[];
+  talk: Record<string, unknown>[];
+  photos: Record<string, unknown>[];
+}
+
+export interface RouteInput {
+  name: string;
+  description?: string;
+  start_location: string;
+  end_location: string;
+  distance_km?: number;
+  difficulty?: "Easy" | "Moderate" | "Hard";
+  best_time?: string;
+  estimated_time?: string;
+  tags?: string[];
+  is_public?: boolean;
+  stops?: {
+    name: string;
+    stop_type?: string;
+    arrival_time?: string;
+    description?: string;
+  }[];
+}
+
+export const routesApi = {
+  list: () => request<ApiResponse<{ routes: ApiRoute[] }>>("/api/routes", { skipAuth: true }),
+  listMine: () => request<ApiResponse<{ routes: ApiRoute[] }>>("/api/routes?mine=true"),
+  get: (id: string) =>
+    request<ApiResponse<{ route: ApiRoute; stops: ApiRouteStop[] }>>(
+      `/api/routes/${encodeURIComponent(id)}`
+    ),
+  discovery: (id: string) =>
+    request<ApiResponse<ApiRouteDiscovery>>(`/api/routes/${encodeURIComponent(id)}/discovery`),
+  create: (route: RouteInput) =>
+    request<ApiResponse<{ route: ApiRoute }>>("/api/routes", {
+      method: "POST",
+      body: JSON.stringify(route),
+    }),
+  remove: (id: string) =>
+    request<ApiResponse<{ deleted: boolean }>>(`/api/routes/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }),
+};
+
 // Health API
 //
 // Health endpoints are deliberately unenveloped — they answer with the payload

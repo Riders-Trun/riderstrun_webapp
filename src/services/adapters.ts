@@ -747,3 +747,97 @@ export function toMentor(api: ApiMentorShape): Mentor {
     isFollowing: api.is_following ?? false,
   };
 }
+
+
+// ── Route discovery ───────────────────────────────────────────────────────────
+
+interface ApiDiscoveryShape {
+  route: {
+    name: string;
+    start_location: string;
+    end_location: string;
+    distance_km?: number | null;
+    difficulty?: string | null;
+    best_time?: string | null;
+    estimated_time?: string | null;
+    tags?: string[];
+    completed_rides?: number;
+  };
+  stops?: {
+    name: string;
+    stop_type: string;
+    arrival_time?: string | null;
+    description?: string | null;
+  }[];
+  past_rides?: {
+    id: string;
+    title: string;
+    start_date: string;
+    full_name?: string | null;
+    username?: string | null;
+    participant_count?: number;
+  }[];
+  talk?: Record<string, unknown>[];
+  photos?: Record<string, unknown>[];
+}
+
+/**
+ * Discovery response → what the four tabs render.
+ *
+ * Everything absent here is absent on purpose. The screen's demo data carried a
+ * rating, per-photo like counts and "tips"; none of those exist in this system,
+ * so they are left off rather than sent as zeros that read like nobody cared.
+ */
+export function toRideDiscovery(api: ApiDiscoveryShape) {
+  return {
+    title: api.route.name,
+    route: `${api.route.start_location} → ${api.route.end_location}`,
+    distance: formatDistance(api.route.distance_km),
+    difficulty: api.route.difficulty ?? "",
+    estimatedTime: api.route.estimated_time ?? "",
+    bestTime: api.route.best_time ?? "",
+    completedRides: api.route.completed_rides ?? 0,
+    tags: api.route.tags ?? [],
+
+    routeStops: (api.stops ?? []).map((stop) => ({
+      name: stop.name,
+      type: stop.stop_type,
+      time: stop.arrival_time ?? undefined,
+      description: stop.description ?? undefined,
+    })),
+
+    pastGroups: (api.past_rides ?? []).map((ride) => ({
+      id: ride.id,
+      date: formatRideDate(ride.start_date),
+      organizer: ride.full_name || ride.username || "Rider",
+      participants: ride.participant_count ?? 0,
+    })),
+
+    riderTalks: (api.talk ?? []).map((comment) => ({
+      id: String(comment.id),
+      rider: String(comment.full_name || comment.username || "Rider"),
+      avatar: initialsOf(String(comment.full_name || comment.username || "Rider")),
+      time: relativeTime(comment.created_at as string | undefined),
+      message: String(comment.content ?? ""),
+    })),
+
+    photos: (api.photos ?? []).map((photo) => ({
+      id: String(photo.id),
+      rider: String(photo.full_name || photo.username || "Rider"),
+      avatar: initialsOf(String(photo.full_name || photo.username || "Rider")),
+      caption: String(photo.caption ?? ""),
+      time: relativeTime(photo.created_at as string | undefined),
+      url: String(photo.media_url ?? ""),
+    })),
+  };
+}
+
+/** "Vikram Raj" → "VR". The tabs render an initials avatar, not an image. */
+function initialsOf(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}

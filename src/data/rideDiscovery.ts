@@ -1,4 +1,4 @@
-export const getMockRideData = (id: string) => ({
+export const getMockRideData = (id: string): RideDiscoveryData => ({
   id: id || "1",
   title: "Nandi Sunrise Sprint",
   route: "Cubbon Park → Nandi Hills",
@@ -199,8 +199,83 @@ export const getMockRideData = (id: string) => ({
   ],
 });
 
-export type RideDiscoveryData = ReturnType<typeof getMockRideData>;
-export type RouteStop = RideDiscoveryData["routeStops"][number];
-export type RiderTalk = RideDiscoveryData["riderTalks"][number];
-export type RidePhoto = RideDiscoveryData["photos"][number];
-export type PastGroup = RideDiscoveryData["pastGroups"][number];
+/**
+ * Declared rather than inferred from the demo data.
+ *
+ * Inferring it made the demo shape the contract, so the real API — which has no
+ * ratings and no like counts — could not satisfy it. Now both fit the same type
+ * and the optional fields are the honest difference between them.
+ */
+export interface RideDiscoveryData {
+  id: string;
+  title: string;
+  route: string;
+  distance: string;
+  difficulty: string;
+  estimatedTime: string;
+  bestTime: string;
+  completedRides: number;
+  /** Demo only — nothing rates a route. */
+  rating?: number;
+  tags: string[];
+  pastGroups: PastGroup[];
+  routeStops: RouteStop[];
+  riderTalks: RiderTalk[];
+  photos: RidePhoto[];
+  /** Demo only — nothing collects riding tips. */
+  tips?: string[];
+}
+/**
+ * The discovery tab shapes, declared rather than derived from the demo data.
+ *
+ * Several fields are optional, and all for the same reason: nothing in this
+ * system collects them. Comments have no likes, photos have no like count, and
+ * rides are not rated. Rather than send zeros — which read as "nobody liked
+ * this" instead of "this is not a thing here" — they are absent, and the tabs
+ * omit the controls that would go with them.
+ */
+export interface RouteStop {
+  name: string;
+  type: string;
+  time?: string;
+  description?: string;
+}
+
+export interface RiderTalkComment {
+  user: string;
+  message: string;
+}
+
+export interface RiderTalk {
+  id: string | number;
+  rider: string;
+  avatar: string;
+  time: string;
+  message: string;
+  likes?: number;
+  isLiked?: boolean;
+  photos?: number;
+  comments?: RiderTalkComment[];
+}
+
+export interface RidePhoto {
+  id: string | number;
+  rider: string;
+  avatar: string;
+  caption: string;
+  time: string;
+  location?: string;
+  likes?: number;
+  isLiked?: boolean;
+  comments?: number;
+  url?: string;
+}
+
+export interface PastGroup {
+  id: string | number;
+  date: string;
+  organizer: string;
+  participants: number;
+  rating?: number;
+  highlights?: string[];
+}

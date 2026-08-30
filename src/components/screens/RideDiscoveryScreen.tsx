@@ -20,6 +20,9 @@ import TalksTab from "@/components/ride-discovery/TalksTab";
 import PhotosTab from "@/components/ride-discovery/PhotosTab";
 import { getMockRideData } from "@/data/rideDiscovery";
 import { mockOr, USE_MOCK } from "@/lib/mock";
+import { useQuery } from "@tanstack/react-query";
+import { routesApi } from "@/services/api";
+import { toRideDiscovery } from "@/services/adapters";
 import { useToast } from "@/hooks/use-toast";
 
 const RideDiscoveryScreen = () => {
@@ -39,17 +42,24 @@ const RideDiscoveryScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // This screen has no endpoint at all — route stops, rider talks, photos and
-  // past groups are demo-only. Outside mock mode every tab renders empty until
-  // a backend exists for them.
-  const demoData = getMockRideData(id || "1");
-  const rideData = mockOr(demoData, {
-    ...demoData,
-    routeStops: [],
-    riderTalks: [],
-    photos: [],
-    pastGroups: [],
+  // The route, its stops, and what happened on the rides that followed it.
+  const discoveryQuery = useQuery({
+    queryKey: ["route-discovery", id],
+    queryFn: () => routesApi.discovery(id!),
+    enabled: !USE_MOCK && Boolean(id),
   });
+
+  const demoData = getMockRideData(id || "1");
+
+  // The API response and the demo shape meet here. Everything the tabs can show
+  // but nothing records — ratings, likes, tips — is simply absent from the real
+  // one, and the tabs omit those controls rather than drawing empty ones.
+  const rideData = mockOr(
+    demoData,
+    discoveryQuery.data?.data
+      ? { ...demoData, ...toRideDiscovery(discoveryQuery.data.data), tips: [] }
+      : { ...demoData, routeStops: [], riderTalks: [], photos: [], pastGroups: [], tips: [] }
+  );
 
   const handleShareRoute = async () => {
     const url = window.location.href;
@@ -182,7 +192,7 @@ const RideDiscoveryScreen = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            <OverviewTab pastGroups={rideData.pastGroups} tips={rideData.tips} />
+            <OverviewTab pastGroups={rideData.pastGroups} tips={rideData.tips ?? []} />
           </TabsContent>
 
           <TabsContent value="route">

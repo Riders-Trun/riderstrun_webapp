@@ -1,72 +1,58 @@
-import { mockOr } from "@/lib/mock";
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Navigation, Clock, Star, Camera, Users, Route, Fuel, Coffee, Mountain, Search, Filter } from "lucide-react";
+import { MapPin, Navigation, Route, Star, Mountain, Users } from "lucide-react";
 import GlobalHeader from "@/components/GlobalHeader";
 import { getDifficultyColor } from "@/lib/rideUtils";
+import { USE_MOCK } from "@/lib/mock";
+import { routesApi, type ApiRoute } from "@/services/api";
+
+/**
+ * The filter pills match against a route's tags, which riders choose freely.
+ * "all" is not a tag — it is the absence of a filter.
+ */
+const ROUTE_TYPES = [
+  { id: "all", label: "All Routes", icon: Route },
+  { id: "scenic", label: "Scenic", icon: Mountain },
+  { id: "adventure", label: "Adventure", icon: Navigation },
+  { id: "heritage", label: "Heritage", icon: Star },
+];
 
 const LocationPlannerScreen = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
 
-  // Demo-only: no destinations endpoint, and these carry invented distances and
-  // rider counts. Empty outside mock mode.
-  const popularDestinations = mockOr([
-    {
-      id: 1,
-      name: "Nandi Hills",
-      distance: "62 km",
-      difficulty: "Easy",
-      rating: 4.8,
-      reviews: 234,
-      image: "photo-1470071459604-3b5ec3a7fe05",
-      attractions: ["Sunrise Point", "Bhoga Nandeeshwara Temple", "Paragliding"],
-      bestTime: "5:30 AM - 8:00 AM",
-      fuelStops: 3,
-      diningOptions: 5,
-      estimatedCost: "₹500-800"
-    },
-    {
-      id: 2,
-      name: "Coorg Coffee Trail",
-      distance: "180 km",
-      difficulty: "Moderate",
-      rating: 4.9,
-      reviews: 156,
-      image: "photo-1482938289607-e9573fc25ebb",
-      attractions: ["Coffee Plantations", "Abbey Falls", "Raja's Seat"],
-      bestTime: "6:00 AM - 6:00 PM",
-      fuelStops: 4,
-      diningOptions: 8,
-      estimatedCost: "₹1500-2500"
-    },
-    {
-      id: 3,
-      name: "Chikmagalur Hills",
-      distance: "245 km",
-      difficulty: "Hard",
-      rating: 4.7,
-      reviews: 189,
-      image: "photo-1433086966358-54859d0ed716",
-      attractions: ["Mullayanagiri Peak", "Baba Budangiri", "Hebbe Falls"],
-      bestTime: "5:00 AM - 7:00 PM",
-      fuelStops: 5,
-      diningOptions: 6,
-      estimatedCost: "₹2000-3000"
-    }
-  ], []);
+  const routesQuery = useQuery({
+    queryKey: ["routes"],
+    queryFn: () => routesApi.list(),
+    enabled: !USE_MOCK,
+  });
 
-  const routeTypes = [
-    { id: "all", label: "All Routes", icon: Route },
-    { id: "scenic", label: "Scenic", icon: Mountain },
-    { id: "adventure", label: "Adventure", icon: Navigation },
-    { id: "heritage", label: "Heritage", icon: Star }
-  ];
+  const routes: ApiRoute[] = routesQuery.data?.data?.routes ?? [];
+
+  // Both filters run here rather than server-side: the public route list is
+  // small enough that a round trip per keystroke would be the slower option.
+  const visibleRoutes = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return routes.filter((route) => {
+      const matchesSearch =
+        !query ||
+        route.name.toLowerCase().includes(query) ||
+        route.start_location.toLowerCase().includes(query) ||
+        route.end_location.toLowerCase().includes(query);
+
+      const matchesType =
+        selectedFilter === "all" ||
+        route.tags.some((tag) => tag.toLowerCase().includes(selectedFilter));
+
+      return matchesSearch && matchesType;
+    });
+  }, [routes, searchQuery, selectedFilter]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -84,7 +70,7 @@ const LocationPlannerScreen = () => {
       <div className="p-3 space-y-4">
         {/* Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto">
-            {routeTypes.map((type) => {
+            {ROUTE_TYPES.map((type) => {
               const Icon = type.icon;
               return (
                 <Badge
@@ -100,114 +86,106 @@ const LocationPlannerScreen = () => {
             })}
         </div>
         
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="text-center p-3">
-            <div className="text-2xl font-bold text-orange-600">50+</div>
-            <div className="text-xs text-gray-600">Destinations</div>
-          </Card>
-          <Card className="text-center p-3">
-            <div className="text-2xl font-bold text-blue-600">1.2K</div>
-            <div className="text-xs text-gray-600">Reviews</div>
-          </Card>
-          <Card className="text-center p-3">
-            <div className="text-2xl font-bold text-green-600">95%</div>
-            <div className="text-xs text-gray-600">Happy Riders</div>
-          </Card>
-        </div>
+        {/* One real number, in place of the invented "50+ destinations,
+            1.2K reviews, 95% happy riders" — nothing counts reviews or
+            happiness, and route count is a fact. */}
+        <Card className="text-center p-3">
+          <div className="text-2xl font-bold text-orange-600">{routes.length}</div>
+          <div className="text-xs text-gray-600">
+            {routes.length === 1 ? "Route shared by riders" : "Routes shared by riders"}
+          </div>
+        </Card>
 
-        {/* Popular Destinations */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Popular Destinations</h2>
-          {popularDestinations.map((destination) => (
-            <Card key={destination.id} className="overflow-hidden">
-              <div className="relative h-32 bg-gradient-to-r from-orange-400 to-orange-600">
-                <div className="absolute inset-0 bg-black/20" />
-                <div className="absolute bottom-2 left-3 text-white">
-                  <h3 className="font-bold text-lg">{destination.name}</h3>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Navigation className="w-3 h-3" />
-                    <span>{destination.distance}</span>
-                    <Badge className={getDifficultyColor(destination.difficulty)}>
-                      {destination.difficulty}
-                    </Badge>
+          {routesQuery.isPending && !USE_MOCK ? (
+            <p className="text-center text-sm text-gray-500 py-8">Loading routes…</p>
+          ) : visibleRoutes.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Route className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+              <h3 className="text-lg font-medium text-gray-900 mb-1">
+                {routes.length === 0 ? "No routes saved yet" : "Nothing matches that"}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {routes.length === 0
+                  ? "Plan a ride and save its route so other riders can find it."
+                  : "Try a different search or filter."}
+              </p>
+              {routes.length === 0 && (
+                <Button
+                  className="bg-orange-500 hover:bg-orange-600"
+                  onClick={() => navigate("/plan-ride")}
+                >
+                  Plan a ride
+                </Button>
+              )}
+            </Card>
+          ) : (
+            visibleRoutes.map((route) => (
+              <Card key={route.id} className="p-4 space-y-3">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-gray-900">{route.name}</h3>
+                    <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate">
+                        {route.start_location} → {route.end_location}
+                      </span>
+                    </div>
                   </div>
+                  {route.difficulty && (
+                    <Badge className={`${getDifficultyColor(route.difficulty)} shrink-0`}>
+                      {route.difficulty}
+                    </Badge>
+                  )}
                 </div>
-                <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/50 text-white px-2 py-1 rounded text-xs">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span>{destination.rating}</span>
-                  <span>({destination.reviews})</span>
-                </div>
-              </div>
-              
-              <CardContent className="p-4 space-y-3">
-                {/* Attractions */}
-                <div>
-                  <div className="text-sm font-medium text-gray-700 mb-1">Top Attractions</div>
+
+                {route.description && (
+                  <p className="text-sm text-gray-700">{route.description}</p>
+                )}
+
+                {route.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {destination.attractions.map((attraction, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {attraction}
+                    {route.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
                       </Badge>
                     ))}
                   </div>
+                )}
+
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  {route.distance_km !== null && (
+                    <span className="flex items-center gap-1">
+                      <Route className="w-3 h-3" />
+                      {route.distance_km} km
+                    </span>
+                  )}
+                  {route.best_time && <span className="text-xs">{route.best_time}</span>}
+                  <span className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    {route.completed_rides} ridden
+                  </span>
                 </div>
 
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">{destination.bestTime}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Fuel className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">{destination.fuelStops} fuel stops</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Coffee className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">{destination.diningOptions} dining options</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-green-600">{destination.estimatedCost}</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600">
-                    Plan Route
+                <div className="flex gap-3 pt-1">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => navigate(`/route-discovery/${route.id}`)}
+                  >
+                    See the route
                   </Button>
-                  <Button size="sm" variant="outline" className="flex-1">
-                    View Details
+                  <Button
+                    className="flex-1 bg-orange-500 hover:bg-orange-600"
+                    onClick={() => navigate(`/plan-ride?route=${route.id}`)}
+                  >
+                    Plan a ride on it
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </Card>
+            ))
+          )}
         </div>
-
-        {/* Route Planning Tools */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Route className="w-5 h-5" />
-              Route Planning Tools
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start">
-              <Navigation className="w-4 h-4 mr-2" />
-              Custom Route Builder
-            </Button>
-            <Button variant="outline" className="w-full justify-start">
-              <MapPin className="w-4 h-4 mr-2" />
-              Nearby Attractions Finder
-            </Button>
-            <Button variant="outline" className="w-full justify-start">
-              <Mountain className="w-4 h-4 mr-2" />
-              Difficulty Calculator
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
