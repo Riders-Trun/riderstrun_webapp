@@ -7,7 +7,12 @@ import { cn } from "@/lib/utils";
 
 interface InviteSystemProps {
   userInviteCode: string;
-  communityPoints: number;
+  /**
+   * Optional because nothing awards points. There is no points system anywhere
+   * in this product, so the tile is simply not drawn when none is given rather
+   * than showing a number with nothing behind it.
+   */
+  communityPoints?: number;
   invitedRiders: number;
   completedInvites: number;
   onGenerateCode?: () => void;
@@ -68,11 +73,18 @@ const InviteSystem = ({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="text-center p-3 bg-orange-50 rounded-lg">
-          <div className="text-2xl font-bold text-orange-600">{communityPoints}</div>
-          <div className="text-xs text-gray-600">Community Points</div>
-        </div>
+      <div
+        className={cn(
+          "grid gap-4 mb-6",
+          communityPoints === undefined ? "grid-cols-2" : "grid-cols-3"
+        )}
+      >
+        {communityPoints !== undefined && (
+          <div className="text-center p-3 bg-orange-50 rounded-lg">
+            <div className="text-2xl font-bold text-orange-600">{communityPoints}</div>
+            <div className="text-xs text-gray-600">Community Points</div>
+          </div>
+        )}
         <div className="text-center p-3 bg-blue-50 rounded-lg">
           <div className="text-2xl font-bold text-blue-600">{invitedRiders}</div>
           <div className="text-xs text-gray-600">Riders Invited</div>

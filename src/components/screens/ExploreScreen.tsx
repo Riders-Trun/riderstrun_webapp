@@ -25,13 +25,23 @@ import StoryViewer from "@/components/explore/stories/StoryViewer";
 import StoryCreator from "@/components/explore/stories/StoryCreator";
 import { NEARBY_RIDERS, CREW_INTENTS, MENTORS } from "@/data/explore";
 import { mockOr, USE_MOCK } from "@/lib/mock";
-import { socialApi, storiesApi, momentsApi, crewsApi, type ApiStoryGroup } from "@/services/api";
+import {
+  socialApi,
+  storiesApi,
+  momentsApi,
+  crewsApi,
+  initiativesApi,
+  communityApi,
+  type ApiStoryGroup,
+} from "@/services/api";
 import {
   toNearbyRider,
   toStoryCarouselEntry,
   toStoryViewerEntry,
   toMoment,
   toCrewIntent,
+  toCommunityInitiative,
+  toMentor,
   type ApiRider,
 } from "@/services/adapters";
 import { useConfig } from "@/contexts/ConfigContext";
@@ -83,7 +93,7 @@ const DEMO_RIDE_MOMENTS = [
 // Mock data for community initiatives
 const DEMO_COMMUNITY_INITIATIVES = [
   {
-    id: 1,
+    id: "demo-initiative-1",
     title: "Blood Donation Drive - Riders for Life",
     description: "Join us for a blood donation camp organized by the riding community. Save lives while building bonds.",
     image: "/api/placeholder/400/200",
@@ -102,7 +112,7 @@ const DEMO_COMMUNITY_INITIATIVES = [
     impact: "Each donation can save up to 3 lives"
   },
   {
-    id: 2,
+    id: "demo-initiative-2",
     title: "Women Riders Safety Workshop",
     description: "Comprehensive safety workshop covering defensive riding, bike maintenance, and emergency response.",
     image: "/api/placeholder/400/200",
@@ -303,6 +313,62 @@ const ExploreScreen = () => {
       toast({ title: "Could not post", description: error.message, variant: "destructive" }),
   });
 
+  // Community initiatives: public to read, like the ride feed.
+  const initiativesQuery = useQuery({
+    queryKey: ["initiatives"],
+    queryFn: () => initiativesApi.list(),
+    enabled: !USE_MOCK && isEnabled("communityInitiatives"),
+  });
+
+  const initiatives = USE_MOCK
+    ? communityInitiatives
+    : (initiativesQuery.data?.data?.initiatives ?? []).map((i) => toCommunityInitiative(i));
+
+  const signUpForInitiative = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "registered" | "interested" }) =>
+      initiativesApi.signUp(id, status),
+    onSuccess: (_result, variables) => {
+      toast({
+        title: variables.status === "registered" ? "You're registered" : "Noted as interested",
+        description:
+          variables.status === "registered"
+            ? "Your place is held."
+            : "You can register properly any time.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["initiatives"] });
+    },
+    onError: (error: Error) =>
+      toast({ title: "Could not sign up", description: error.message, variant: "destructive" }),
+  });
+
+  // Mentors: curated by an admin, so the list is often empty and that is fine.
+  const mentorsQuery = useQuery({
+    queryKey: ["mentors"],
+    queryFn: () => communityApi.mentors(),
+    enabled: !USE_MOCK && isEnabled("mentors"),
+  });
+
+  const mentorList = USE_MOCK
+    ? mentors
+    : (mentorsQuery.data?.data?.mentors ?? []).map(toMentor);
+
+  const toggleFollow = useMutation({
+    mutationFn: ({ mentorId, following }: { mentorId: number; following: boolean }) =>
+      following ? communityApi.unfollowMentor(mentorId) : communityApi.followMentor(mentorId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mentors"] }),
+    onError: (error: Error) =>
+      toast({ title: "Could not update", description: error.message, variant: "destructive" }),
+  });
+
+  // The caller's own invite code, issued on first read.
+  const inviteQuery = useQuery({
+    queryKey: ["invite"],
+    queryFn: () => communityApi.myInvite(),
+    enabled: !USE_MOCK && isEnabled("invites"),
+  });
+
+  const invite = inviteQuery.data?.data;
+
   const connect = useMutation({
     // "send" is the API's action name for a connection request; there is no
     // "request" action, and sending one is a 400.
@@ -453,8 +519,14 @@ const ExploreScreen = () => {
               </div>
               
               <div className="grid grid-cols-1 gap-4">
-                {mentors.map((mentor) => (
-                  <MentorHighlightCard key={mentor.id} mentor={mentor} />
+                {mentorList.map((mentor) => (
+                  <MentorHighlightCard
+                    key={mentor.id}
+                    mentor={mentor}
+                    onFollow={(mentorId) =>
+                      toggleFollow.mutate({ mentorId, following: mentor.isFollowing })
+                    }
+                  />
                 ))}
               </div>
             </div>
@@ -557,8 +629,13 @@ const ExploreScreen = () => {
               </div>
               
               <div className="grid grid-cols-1 gap-4">
-                {communityInitiatives.map((initiative) => (
-                  <CommunityInitiativeCard key={initiative.id} initiative={initiative} />
+                {initiatives.map((initiative) => (
+                  <CommunityInitiativeCard
+                    key={initiative.id}
+                    initiative={initiative}
+                    onRegister={(id) => signUpForInitiative.mutate({ id, status: "registered" })}
+                    onShowInterest={(id) => signUpForInitiative.mutate({ id, status: "interested" })}
+                  />
                 ))}
               </div>
             </div>
@@ -575,10 +652,9 @@ const ExploreScreen = () => {
               </div>
               
               <InviteSystem
-                userInviteCode="RIDE2024"
-                communityPoints={1250}
-                invitedRiders={8}
-                completedInvites={5}
+                userInviteCode={USE_MOCK ? "RIDE2024" : invite?.code ?? ""}
+                invitedRiders={USE_MOCK ? 8 : invite?.invited ?? 0}
+                completedInvites={USE_MOCK ? 5 : invite?.completed ?? 0}
               />
             </div>
             )}

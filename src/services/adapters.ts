@@ -1,4 +1,6 @@
 import type { Ride, MyRide, UserProfile, Notification, NearbyRider, CrewIntent } from "@/types";
+import type { CommunityInitiative } from "@/types/explore";
+import type { Mentor } from "@/types";
 
 /**
  * Translates backend ride rows into the view models the UI renders.
@@ -642,5 +644,106 @@ export function toCrewIntent(api: ApiCrewShape): CrewIntent {
     date: api.ride_date ? formatRideDate(api.ride_date) : "",
     requirements: api.requirements ?? [],
     timeAgo: relativeTime(api.created_at),
+  };
+}
+
+
+// ── Community initiatives ─────────────────────────────────────────────────────
+
+interface ApiInitiativeShape {
+  id: string;
+  organizer_id: number;
+  username?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  organization?: string | null;
+  title: string;
+  description?: string | null;
+  image_url?: string | null;
+  initiative_type: CommunityInitiative["type"];
+  starts_at: string;
+  location: string;
+  max_participants?: number | null;
+  registered_count?: number;
+  registration_deadline?: string | null;
+  requirements?: string[];
+  impact?: string | null;
+}
+
+/**
+ * API initiative → the card.
+ *
+ * `participantsCount` is the firm count only. Interest is deliberately left out
+ * of it: the card renders this against `maxParticipants` as "45 of 100 places
+ * taken", and counting maybes there would overstate how full the event is.
+ */
+export function toCommunityInitiative(
+  api: ApiInitiativeShape,
+  myStatus?: "registered" | "interested" | null
+): CommunityInitiative {
+  return {
+    id: api.id,
+    title: api.title,
+    description: api.description ?? "",
+    image: api.image_url ?? "",
+    type: api.initiative_type,
+    organizer: {
+      name: api.full_name || api.username || "Organizer",
+      avatar: api.avatar_url ?? "",
+      organization: api.organization ?? undefined,
+    },
+    date: formatRideDate(api.starts_at),
+    location: api.location,
+    participantsCount: api.registered_count ?? 0,
+    maxParticipants: api.max_participants ?? undefined,
+    registrationDeadline: api.registration_deadline
+      ? formatRideDate(api.registration_deadline)
+      : undefined,
+    isRegistered: myStatus === "registered",
+    requirements: api.requirements ?? [],
+    impact: api.impact ?? undefined,
+  };
+}
+
+
+// ── Mentors ───────────────────────────────────────────────────────────────────
+
+interface ApiMentorShape {
+  user_id: number;
+  username?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  title?: string | null;
+  quote?: string | null;
+  specialties?: string[];
+  rides_organized?: number;
+  follower_count?: number;
+  is_following?: boolean;
+}
+
+/**
+ * API mentor → the highlight card.
+ *
+ * The card can display four stats and only two exist. `safetyStreak` and
+ * `rating` have no source anywhere in this system, so they are sent as zero
+ * rather than invented — and the card's achievement list, which is built
+ * entirely from those absent numbers, is left empty rather than fabricated.
+ */
+export function toMentor(api: ApiMentorShape): Mentor {
+  return {
+    id: api.user_id,
+    name: api.full_name || api.username || "Rider",
+    avatar: api.avatar_url ?? "",
+    title: api.title ?? "",
+    achievements: [],
+    stats: {
+      ridesOrganized: api.rides_organized ?? 0,
+      safetyStreak: 0,
+      followersCount: api.follower_count ?? 0,
+      rating: 0,
+    },
+    specialties: api.specialties ?? [],
+    quote: api.quote ?? "",
+    isFollowing: api.is_following ?? false,
   };
 }

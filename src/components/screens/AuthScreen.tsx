@@ -3,13 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import { Loader, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useConfig } from "@/contexts/ConfigContext";
 
 const AuthScreen = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  // Arrived through somebody's invite link (/invite/:code). The code only ever
+  // credits the person who shared it — it grants nothing and gates nothing — so
+  // an unrecognised one still produces an account.
+  const { code: invitedWith } = useParams<{ code?: string }>();
+
+  // An invite link is an invitation to join, so it opens on the sign-up side.
+  const [isLogin, setIsLogin] = useState(!invitedWith);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +39,7 @@ const AuthScreen = () => {
           setIsSubmitting(false);
           return;
         }
-        await signup(email, password);
+        await signup(email, password, invitedWith);
       }
       navigate("/");
     } catch (err) {
@@ -60,6 +66,12 @@ const AuthScreen = () => {
           <p className="text-sm text-gray-500 mt-1">
             {isLogin ? "Sign in to your RidersTurn account" : "Join the riding community"}
           </p>
+          {!isLogin && invitedWith && (
+            <p className="text-sm text-orange-600 mt-2">
+              Joining with invite code{" "}
+              <span className="font-semibold tracking-wider">{invitedWith.toUpperCase()}</span>
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

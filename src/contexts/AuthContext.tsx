@@ -13,7 +13,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, inviteCode?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -65,8 +65,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const signup = useCallback(async (email: string, password: string) => {
-    const res = await authApi.signup(email, password);
+  const signup = useCallback(async (email: string, password: string, inviteCode?: string) => {
+    const res = await authApi.signup(email, password, inviteCode);
     if (res.status === "success" && res.data) {
       setAccessToken(res.data.accessToken);
       setUser(res.data.user);

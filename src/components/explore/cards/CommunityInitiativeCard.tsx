@@ -6,9 +6,9 @@ import type { CommunityInitiative } from "@/types/explore";
 
 interface CommunityInitiativeCardProps {
   initiative: CommunityInitiative;
-  onRegister?: (initiativeId: number) => void;
-  onShowInterest?: (initiativeId: number) => void;
-  onViewDetails?: (initiativeId: number) => void;
+  onRegister?: (initiativeId: string) => void;
+  onShowInterest?: (initiativeId: string) => void;
+  onViewDetails?: (initiativeId: string) => void;
 }
 
 const CommunityInitiativeCard = ({ 

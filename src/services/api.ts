@@ -112,10 +112,16 @@ async function requestList<T>(
 
 // Auth API
 export const authApi = {
-  signup: (email: string, password: string) =>
+  // `inviteCode` is attribution only: an unknown code is ignored by the server
+  // rather than refusing the account.
+  signup: (email: string, password: string, inviteCode?: string) =>
     request<ApiResponse<{ accessToken: string; user: { id: number; email: string; role: string } }>>(
       "/api/auth/signup",
-      { method: "POST", body: JSON.stringify({ email, password }), skipAuth: true }
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password, ...(inviteCode ? { invite_code: inviteCode } : {}) }),
+        skipAuth: true,
+      }
     ),
   login: (email: string, password: string) =>
     request<ApiResponse<{ accessToken: string; user: { id: number; email: string; role: string } }>>(
@@ -527,6 +533,95 @@ export const crewsApi = {
     request<ApiResponse<{ left: boolean }>>(`/api/crews/${encodeURIComponent(id)}/join`, {
       method: "DELETE",
     }),
+};
+
+/**
+ * Community initiatives — blood drives, workshops, meetups, charity runs.
+ *
+ * A sign-up has two strengths: `registered` takes a place against capacity,
+ * `interested` does not.
+ */
+export interface ApiInitiative {
+  id: string;
+  organizer_id: number;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  organization: string | null;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  initiative_type: "blood-donation" | "safety-workshop" | "women-only" | "meetup" | "charity";
+  starts_at: string;
+  location: string;
+  max_participants: number | null;
+  registered_count: number;
+  interested_count: number;
+  registration_deadline: string | null;
+  requirements: string[];
+  impact: string | null;
+  status: "open" | "cancelled";
+}
+
+export const initiativesApi = {
+  list: () =>
+    request<ApiResponse<{ initiatives: ApiInitiative[] }>>("/api/initiatives", { skipAuth: true }),
+  get: (id: string) =>
+    request<ApiResponse<{
+      initiative: ApiInitiative;
+      registrations: Record<string, unknown>[];
+      my_status: "registered" | "interested" | null;
+    }>>(`/api/initiatives/${encodeURIComponent(id)}`),
+  signUp: (id: string, status: "registered" | "interested") =>
+    request<ApiResponse<{ status: string }>>(
+      `/api/initiatives/${encodeURIComponent(id)}/register`,
+      { method: "POST", body: JSON.stringify({ status }) }
+    ),
+  withdraw: (id: string) =>
+    request<ApiResponse<{ withdrawn: boolean }>>(
+      `/api/initiatives/${encodeURIComponent(id)}/register`,
+      { method: "DELETE" }
+    ),
+};
+
+/**
+ * Community — invite codes and mentors.
+ *
+ * The mentor stats are deliberately sparse: only `rides_organized` and
+ * `follower_count` have a source. A rating and a "safety streak" appear on the
+ * card's demo data and nothing computes them, so the API does not send them.
+ */
+export interface ApiMentor {
+  user_id: number;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  city: string | null;
+  title: string | null;
+  quote: string | null;
+  specialties: string[];
+  rides_organized: number;
+  follower_count: number;
+  is_following: boolean;
+}
+
+export const communityApi = {
+  myInvite: () =>
+    request<ApiResponse<{ code: string; invited: number; completed: number }>>(
+      "/api/community/invite"
+    ),
+  mentors: () =>
+    request<ApiResponse<{ mentors: ApiMentor[] }>>("/api/community/mentors"),
+  followMentor: (mentorId: number) =>
+    request<ApiResponse<{ following: boolean }>>(
+      `/api/community/mentors/${mentorId}/follow`,
+      { method: "POST" }
+    ),
+  unfollowMentor: (mentorId: number) =>
+    request<ApiResponse<{ following: boolean }>>(
+      `/api/community/mentors/${mentorId}/follow`,
+      { method: "DELETE" }
+    ),
 };
 
 // Health API

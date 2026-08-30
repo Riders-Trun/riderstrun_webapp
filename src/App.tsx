@@ -88,6 +88,9 @@ const App = () => (
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/auth" element={<AuthScreen />} />
+                {/* Somebody's invite link. Same screen, opened on the sign-up
+                    side with their code carried through to attribution. */}
+                <Route path="/invite/:code" element={<AuthScreen />} />
                 {/* Public, like /auth: someone who cannot sign in cannot be behind the guard.
                     Flagged off until the server has an email provider to deliver the link. */}
                 <Route element={<FeatureRoute feature="passwordReset" />}>

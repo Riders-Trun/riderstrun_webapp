@@ -180,7 +180,8 @@ export interface RideMoment {
 }
 
 export interface CommunityInitiative {
-  id: number;
+  /** A UUID from the API. */
+  id: string;
   title: string;
   description: string;
   image: string;
