@@ -35,7 +35,15 @@ export interface AppConfig {
         explore: boolean;
         rideDiscovery: boolean;
         stories: boolean;
+        /** Explore sub-sections — each waits on its own backend. */
+        crews: boolean;
+        mentors: boolean;
+        rideMoments: boolean;
+        communityInitiatives: boolean;
+        invites: boolean;
         passwordReset: boolean;
+        travelDiary: boolean;
+        locationPlanner: boolean;
     };
 }
 
@@ -77,7 +85,14 @@ export const FALLBACK_CONFIG: AppConfig = {
         explore: false,
         rideDiscovery: false,
         stories: false,
+        crews: false,
+        mentors: false,
+        rideMoments: false,
+        communityInitiatives: false,
+        invites: false,
         passwordReset: false,
+        travelDiary: false,
+        locationPlanner: false,
     },
 };
 

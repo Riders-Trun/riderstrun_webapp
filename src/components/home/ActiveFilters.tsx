@@ -1,15 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-
-interface FilterOptions {
-  range: number[];
-  sortBy: string;
-  bikeCC: string;
-  groupSize: number[];
-  duration: string;
-  rideType: string[];
-}
+import type { FilterOptions } from "@/types";
 
 interface ActiveFiltersProps {
   filters: FilterOptions;

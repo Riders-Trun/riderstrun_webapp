@@ -47,9 +47,15 @@ export const useFilters = (initialFilters?: Partial<FilterOptions>) => {
     }
   }, []);
 
+  // Clears back to what this hook actually started with. Ignoring initialFilters
+  // here meant a screen that opened pre-filtered could never be returned to its
+  // own starting point — only to the global defaults.
   const clearAllFilters = useCallback(() => {
-    setFilters({ ...DEFAULT_FILTERS, rideType: [] });
-  }, []);
+    setFilters({ ...DEFAULT_FILTERS, rideType: [], ...initialFilters });
+    // initialFilters is a prop-shaped object; callers pass a literal, so keying
+    // on its contents rather than its identity avoids rebuilding every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(initialFilters ?? {})]);
 
   return {
     filters,

@@ -58,6 +58,8 @@ const RouteDiscoveryScreen = lazy(() => import("@/components/screens/RideDiscove
 const ExploreScreen = lazy(() => import("@/components/screens/ExploreScreen"));
 const NotificationsScreen = lazy(() => import("@/components/screens/NotificationsScreen"));
 const ProfileScreen = lazy(() => import("@/components/screens/ProfileScreen"));
+const ForgotPasswordScreen = lazy(() => import("@/components/screens/ForgotPasswordScreen"));
+const ResetPasswordScreen = lazy(() => import("@/components/screens/ResetPasswordScreen"));
 const JoinRideScreen = lazy(() => import("@/components/screens/JoinRideScreen"));
 const AuthScreen = lazy(() => import("@/components/screens/AuthScreen"));
 const AdminScreen = lazy(() => import("@/components/screens/AdminScreen"));
@@ -86,6 +88,12 @@ const App = () => (
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/auth" element={<AuthScreen />} />
+                {/* Public, like /auth: someone who cannot sign in cannot be behind the guard.
+                    Flagged off until the server has an email provider to deliver the link. */}
+                <Route element={<FeatureRoute feature="passwordReset" />}>
+                  <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+                  <Route path="/reset-password" element={<ResetPasswordScreen />} />
+                </Route>
                 <Route element={<AdminRoute />}>
                   <Route path="/admin" element={<AdminScreen />} />
                 </Route>
@@ -96,8 +104,12 @@ const App = () => (
                     <Route path="/ride/:id" element={<RideDetailsScreen />} />
                     <Route path="/my-rides" element={<MyRidesScreen />} />
                     <Route path="/plan-ride" element={<PlanRideScreen />} />
-                    <Route path="/location-planner" element={<LocationPlannerScreen />} />
-                    <Route path="/travel-diary" element={<TravelDiaryScreen />} />
+                    <Route element={<FeatureRoute feature="locationPlanner" />}>
+                      <Route path="/location-planner" element={<LocationPlannerScreen />} />
+                    </Route>
+                    <Route element={<FeatureRoute feature="travelDiary" />}>
+                      <Route path="/travel-diary" element={<TravelDiaryScreen />} />
+                    </Route>
                     <Route element={<FeatureRoute feature="explore" />}>
                       <Route path="/explore" element={<ExploreScreen />} />
                     </Route>

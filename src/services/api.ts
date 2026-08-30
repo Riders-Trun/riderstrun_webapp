@@ -222,6 +222,17 @@ export const ridesApi = {
         ...(tripCode ? { body: JSON.stringify({ trip_code: tripCode }) } : {}),
       }
     ),
+  update: (id: string, data: Record<string, unknown>) =>
+    request<ApiResponse<Record<string, unknown>>>(`/api/rides/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  /** Withdraw from a ride. Mirrors `join` — DELETE removes what POST created. */
+  leave: (id: string) =>
+    request<ApiResponse<Record<string, unknown>>>(
+      `/api/rides/${encodeURIComponent(id)}/join`,
+      { method: "DELETE" }
+    ),
   complete: (id: string) =>
     request<ApiResponse<Record<string, unknown>>>(
       `/api/rides/${encodeURIComponent(id)}/complete`,

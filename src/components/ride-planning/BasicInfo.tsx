@@ -13,9 +13,15 @@ interface BasicInfoProps {
     time: string;
   };
   onFormDataChange: (updates: Partial<{ title: string; type: string; date: string; time: string }>) => void;
+  /** Field name → message, from validateRideForm. Empty until a publish is attempted. */
+  errors?: Record<string, string>;
 }
 
-const BasicInfo = ({ formData, onFormDataChange }: BasicInfoProps) => {
+/** One message under one field, or nothing. Keeps every field below identical. */
+const FieldError = ({ message }: { message?: string }) =>
+  message ? <p className="text-xs text-red-600 mt-1">{message}</p> : null;
+
+const BasicInfo = ({ formData, onFormDataChange, errors = {} }: BasicInfoProps) => {
   // From the server, which validates against the same list. Declaring these
   // here meant the form could offer a type the API would reject — the two had
   // no way to be checked against each other.
@@ -36,7 +42,9 @@ const BasicInfo = ({ formData, onFormDataChange }: BasicInfoProps) => {
             value={formData.title}
             maxLength={100}
             onChange={(e) => onFormDataChange({title: e.target.value})}
+            aria-invalid={Boolean(errors.title)}
           />
+          <FieldError message={errors.title} />
         </div>
         
         <div>
@@ -53,6 +61,7 @@ const BasicInfo = ({ formData, onFormDataChange }: BasicInfoProps) => {
               ))}
             </SelectContent>
           </Select>
+          <FieldError message={errors.type} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -63,7 +72,9 @@ const BasicInfo = ({ formData, onFormDataChange }: BasicInfoProps) => {
               type="date"
               value={formData.date}
               onChange={(e) => onFormDataChange({date: e.target.value})}
+              aria-invalid={Boolean(errors.date)}
             />
+            <FieldError message={errors.date} />
           </div>
           <div>
             <Label htmlFor="time">Start Time</Label>
@@ -72,7 +83,9 @@ const BasicInfo = ({ formData, onFormDataChange }: BasicInfoProps) => {
               type="time"
               value={formData.time}
               onChange={(e) => onFormDataChange({time: e.target.value})}
+              aria-invalid={Boolean(errors.time)}
             />
+            <FieldError message={errors.time} />
           </div>
         </div>
       </CardContent>

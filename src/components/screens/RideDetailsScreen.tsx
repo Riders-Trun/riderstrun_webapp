@@ -16,7 +16,7 @@ import { joinErrorMessage } from "@/lib/joinErrors";
 import { useToast } from "@/hooks/use-toast";
 import {
   MapPin, Clock, Users, Shield, Phone, CheckCircle, AlertTriangle,
-  Star, MessageCircle, Cloud, Thermometer, Route, TrendingUp,
+  Star, Cloud, Thermometer, Route, TrendingUp,
   Calendar, DollarSign, FileText,
 } from "lucide-react";
 
@@ -51,7 +51,9 @@ type RideDetailView = Omit<Partial<typeof mockRideDetails>, CoreDetailFields> & 
 
 const RideDetailsScreen = () => {
   const { id } = useParams<{ id: string }>();
-  const { isLoading: simulatedLoading } = useSimulatedLoading(1200);
+  // Only in mock mode. On the real API path there is a genuine request to wait
+  // for, and adding 1.2s to it was a second of stalling that bought nothing.
+  const { isLoading: simulatedLoading } = useSimulatedLoading(1200, USE_MOCK);
   const { data: apiRide, isLoading: apiLoading } = useRideById(id ?? "");
   const [isJoined, setIsJoined] = useState(false);
   const [showAllPreviousTrips, setShowAllPreviousTrips] = useState(false);
@@ -439,10 +441,7 @@ const RideDetailsScreen = () => {
                     <Phone className="w-4 h-4 mr-1" />
                     Contact Organizer
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <MessageCircle className="w-4 h-4 mr-1" />
-                    Group Chat
-                  </Button>
+
                 </div>
                 <div className="text-xs text-center text-gray-500 mt-2">
                   Assembly point: {ride.startLocation} at {ride.startTime}

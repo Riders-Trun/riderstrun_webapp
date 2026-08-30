@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { 
-  Users, 
-  Crown, 
-  Camera, 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Users,
+  Crown,
+  Camera,
   Heart,
   UserPlus,
   Filter
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Import explore components
@@ -24,13 +23,17 @@ import InviteSystem from "@/components/explore/sections/InviteSystem";
 import StoryViewer from "@/components/explore/stories/StoryViewer";
 import StoryCreator from "@/components/explore/stories/StoryCreator";
 import { NEARBY_RIDERS, CREW_INTENTS, MENTORS } from "@/data/explore";
-import { mockOr } from "@/lib/mock";
-import type { StoryContent } from "@/types";
+import { mockOr, USE_MOCK } from "@/lib/mock";
+import { socialApi } from "@/services/api";
+import { toNearbyRider, type ApiRider } from "@/services/adapters";
+import { useConfig } from "@/contexts/ConfigContext";
+import { useToast } from "@/hooks/use-toast";
+import type { StoryContent, NearbyRider } from "@/types";
 
-// Nothing on this screen has a backend endpoint yet. Outside mock mode every
-// section renders empty rather than showing riders, crews and events that do
-// not exist — fabricated people are worse than an empty section.
-const nearbyRiders = mockOr(NEARBY_RIDERS, []);
+// Riders are real: they come from /api/social/suggestions and /api/social/search.
+// Everything else on this screen — crews, mentors, moments, initiatives, stories,
+// invites — has no endpoint behind it, so each sits behind its own feature flag
+// and stays hidden until one exists. The demo data below renders only in mock mode.
 const crewIntents = mockOr(CREW_INTENTS, []);
 const mentors = mockOr(MENTORS, []);
 
@@ -145,7 +148,22 @@ const communityInitiatives = mockOr(DEMO_COMMUNITY_INITIATIVES, []);
 const stories = mockOr(DEMO_STORIES, []);
 const mockStoryData = mockOr(DEMO_STORY_DATA, []);
 
+/**
+ * Stands in for a tab whose backend does not exist. Saying so is better than an
+ * empty panel that reads as a bug, and better than demo content that reads as real.
+ */
+const SectionComingSoon = ({ title, note }: { title: string; note: string }) => (
+  <div className="bg-white rounded-xl p-8 text-center shadow-sm">
+    <h3 className="text-base font-semibold text-gray-900">{title} is coming soon</h3>
+    <p className="text-sm text-gray-500 mt-1">{note}</p>
+  </div>
+);
+
 const ExploreScreen = () => {
+  const { isEnabled } = useConfig();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedTab, setSelectedTab] = useState("nearby");
@@ -156,6 +174,43 @@ const ExploreScreen = () => {
     status: "all",
     rideStyle: "all",
     distance: "all"
+  });
+
+  // Two riders in this screen, one list. With no search term the backend's
+  // suggestions are the "nearby" riders; typing switches to a name search.
+  // `trim().length >= 2` matches the server, which answers an empty list below
+  // two characters rather than scanning every profile.
+  const trimmedQuery = searchQuery.trim();
+  const isSearching = trimmedQuery.length >= 2;
+
+  const suggestionsQuery = useQuery({
+    queryKey: ["social", "suggestions"],
+    queryFn: () => socialApi.suggestions(),
+    enabled: !USE_MOCK && !isSearching,
+  });
+
+  const searchResults = useQuery({
+    queryKey: ["social", "search", trimmedQuery],
+    queryFn: () => socialApi.search(trimmedQuery),
+    enabled: !USE_MOCK && isSearching,
+  });
+
+  const activeQuery = isSearching ? searchResults : suggestionsQuery;
+
+  const riders: NearbyRider[] = USE_MOCK
+    ? NEARBY_RIDERS
+    : ((activeQuery.data ?? []) as ApiRider[]).map(toNearbyRider);
+
+  const connect = useMutation({
+    mutationFn: (riderId: number) => socialApi.connectionAction(riderId, "request"),
+    onSuccess: () => {
+      toast({ title: "Request sent", description: "They'll see your connection request." });
+      // The suggestion list is ranked partly by who you are not yet connected to.
+      queryClient.invalidateQueries({ queryKey: ["social", "suggestions"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Could not send request", description: error.message, variant: "destructive" });
+    },
   });
 
   // Event handlers
@@ -171,68 +226,21 @@ const ExploreScreen = () => {
     setShowStoryCreator(true);
   };
 
-  const handlePublishStory = (storyContent: StoryContent) => {
-    console.log("Publishing story:", storyContent);
-  };
+  // These filters read `status` and `rideStyle`, and the backend stores neither —
+  // the adapter leaves both neutral. Applying them to real riders would hide
+  // every one of them, so the whole panel is offered only where the fields
+  // actually exist. Restore it when presence and riding styles are stored.
+  const canFilterRiders = USE_MOCK;
 
-  const handleConnectRider = (riderId: number) => {
-    console.log("Connecting with rider:", riderId);
-  };
-
-  const handleInviteRider = (riderId: number) => {
-    console.log("Inviting rider:", riderId);
-  };
-
-  const handleJoinCrew = (crewId: number) => {
-    console.log("Joining crew:", crewId);
-  };
-
-  const handleCreateCrewIntent = (intent: { title: string; description: string; lookingFor: number; rideType: string }) => {
-    console.log("Creating crew intent:", intent);
-  };
-
-  const handleFollowMentor = (mentorId: number) => {
-    console.log("Following mentor:", mentorId);
-  };
-
-  const handleInviteCollaborate = (mentorId: number) => {
-    console.log("Inviting mentor to collaborate:", mentorId);
-  };  const handleAskGuidance = (mentorId: number) => {
-    console.log("Asking guidance from mentor:", mentorId);
-  };
-
-  const handleJoinNextRide = (momentId: number) => {
-    console.log("Joining next ride:", momentId);
-  };
-
-  const handleAskForRoute = (momentId: number) => {
-    console.log("Asking for route:", momentId);
-  };
-
-  const handleRegisterInitiative = (initiativeId: number) => {
-    console.log("Registering for initiative:", initiativeId);
-  };
-
-  const handleShowInterest = (initiativeId: number) => {
-    console.log("Showing interest in initiative:", initiativeId);
-  };
-
-  const handleShareInviteCode = (method: string) => {
-    console.log("Sharing invite code via:", method);
-  };
-
-  const handleFilterClick = () => {
-    console.log("Opening filters");
-  };
-
-  // Filter nearby riders based on selected filters
-  const filteredRiders = nearbyRiders.filter(rider => {
-    if (riderFilters.status !== "all" && rider.status !== riderFilters.status) return false;
-    if (riderFilters.rideStyle !== "all" && !rider.rideStyle.some(style => 
-      style.toLowerCase().includes(riderFilters.rideStyle.toLowerCase())
-    )) return false;
-    return true;
-  });
+  const filteredRiders = canFilterRiders
+    ? riders.filter(rider => {
+        if (riderFilters.status !== "all" && rider.status !== riderFilters.status) return false;
+        if (riderFilters.rideStyle !== "all" && !rider.rideStyle.some(style =>
+          style.toLowerCase().includes(riderFilters.rideStyle.toLowerCase())
+        )) return false;
+        return true;
+      })
+    : riders;
 
   return (    <div className="bg-gray-50">
       {/* Search Header */}
@@ -241,15 +249,16 @@ const ExploreScreen = () => {
         onSearchChange={setSearchQuery}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        onFilterClick={handleFilterClick}
       />
 
-      {/* Stories Section */}
-      <StoriesCarousel
-        stories={stories}
-        onStoryClick={handleStoryClick}
-        onAddStory={handleAddStory}
-      />
+      {/* Stories — no endpoint yet, so hidden unless the flag says otherwise. */}
+      {isEnabled("stories") && (
+        <StoriesCarousel
+          stories={stories}
+          onStoryClick={handleStoryClick}
+          onAddStory={handleAddStory}
+        />
+      )}
 
       {/* Main Content Tabs */}
       <div className="flex-1">
@@ -271,6 +280,7 @@ const ExploreScreen = () => {
 
           {/* Nearby Riders Tab */}          <TabsContent value="nearby" className="px-4 space-y-6 mt-6">
             {/* Filters */}
+            {canFilterRiders && (
             <div className="bg-white rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Filter className="w-4 h-4 text-gray-500" />
@@ -320,8 +330,10 @@ const ExploreScreen = () => {
                 </Select>
               </div>
             </div>
+            )}
 
-            {/* Mentors Section */}
+            {/* Mentors — no endpoint yet. */}
+            {isEnabled("mentors") && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -332,50 +344,66 @@ const ExploreScreen = () => {
               
               <div className="grid grid-cols-1 gap-4">
                 {mentors.map((mentor) => (
-                  <MentorHighlightCard
-                    key={mentor.id}
-                    mentor={mentor}
-                    onFollow={handleFollowMentor}
-                    onInviteCollaborate={handleInviteCollaborate}
-                    onAskGuidance={handleAskGuidance}
-                  />
+                  <MentorHighlightCard key={mentor.id} mentor={mentor} />
                 ))}
               </div>
             </div>
+            )}
+
             {/* Nearby Riders */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Users className="w-5 h-5 text-orange-500" />
-                  Nearby Riders ({filteredRiders.length})
+                  {isSearching ? "Search Results" : "Riders for You"} ({filteredRiders.length})
                 </h2>
               </div>
-              
-              <div className="grid grid-cols-1 gap-4">
-                {filteredRiders.map((rider) => (
-                  <NearbyRiderCard
-                    key={rider.id}
-                    rider={rider}
-                    onConnect={handleConnectRider}
-                    onInvite={handleInviteRider}
-                  />
-                ))}
-              </div>
+
+              {activeQuery.isPending && !USE_MOCK ? (
+                <p className="text-sm text-gray-500 py-6 text-center">Finding riders…</p>
+              ) : activeQuery.isError && !USE_MOCK ? (
+                <p className="text-sm text-red-600 py-6 text-center">
+                  Could not load riders. Check your connection and try again.
+                </p>
+              ) : filteredRiders.length === 0 ? (
+                <p className="text-sm text-gray-500 py-6 text-center">
+                  {isSearching
+                    ? `No riders match "${trimmedQuery}".`
+                    : "No suggestions yet — join a ride to start meeting riders."}
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredRiders.map((rider, index) => (
+                    <NearbyRiderCard
+                      key={rider.id || `${rider.name}-${index}`}
+                      rider={rider}
+                      // A rider with no id came from search, which projects only
+                      // public profile columns. There is nothing to send a request
+                      // about, so the action is withheld rather than shown broken.
+                      onConnect={rider.id ? (id) => connect.mutate(id) : undefined}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </TabsContent>
 
           {/* Crew Finder Tab */}
           <TabsContent value="crew" className="px-4 space-y-6 mt-6">
-            <CrewFinder
-              crewIntents={crewIntents}
-              onJoinCrew={handleJoinCrew}
-              onCreateIntent={handleCreateCrewIntent}
-            />
+            {isEnabled("crews") ? (
+              <CrewFinder crewIntents={crewIntents} />
+            ) : (
+              <SectionComingSoon
+                title="Crew Finder"
+                note="Forming crews needs a backend that does not exist yet."
+              />
+            )}
           </TabsContent>
 
           {/* Community Tab */}
           <TabsContent value="community" className="px-4 space-y-6 mt-6">
-            {/* Ride Moments */}
+            {/* Ride Moments — no endpoint yet. */}
+            {isEnabled("rideMoments") && (
             <div>              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Camera className="w-5 h-5 text-purple-500" />
@@ -385,17 +413,14 @@ const ExploreScreen = () => {
               
               <div className="grid grid-cols-1 gap-4">
                 {rideMoments.map((moment) => (
-                  <RideMomentCard
-                    key={moment.id}
-                    moment={moment}
-                    onJoinNextRide={handleJoinNextRide}
-                    onAskForRoute={handleAskForRoute}
-                  />
+                  <RideMomentCard key={moment.id} moment={moment} />
                 ))}
               </div>
             </div>
+            )}
 
-            {/* Community Initiatives */}
+            {/* Community Initiatives — no endpoint yet. */}
+            {isEnabled("communityInitiatives") && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -406,16 +431,14 @@ const ExploreScreen = () => {
               
               <div className="grid grid-cols-1 gap-4">
                 {communityInitiatives.map((initiative) => (
-                  <CommunityInitiativeCard
-                    key={initiative.id}
-                    initiative={initiative}
-                    onRegister={handleRegisterInitiative}
-                    onShowInterest={handleShowInterest}
-                  />
+                  <CommunityInitiativeCard key={initiative.id} initiative={initiative} />
                 ))}
               </div>
             </div>
-            {/* Invite System */}
+            )}
+
+            {/* Invites — no endpoint yet: invite codes are not issued or tracked. */}
+            {isEnabled("invites") && (
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -429,15 +452,24 @@ const ExploreScreen = () => {
                 communityPoints={1250}
                 invitedRiders={8}
                 completedInvites={5}
-                onShareCode={handleShareInviteCode}
               />
             </div>
+            )}
+
+            {!isEnabled("rideMoments") &&
+              !isEnabled("communityInitiatives") &&
+              !isEnabled("invites") && (
+                <SectionComingSoon
+                  title="Community"
+                  note="Ride moments, initiatives and invites are not built yet."
+                />
+              )}
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Story Viewer Modal */}
-      {showStoryViewer && (
+      {isEnabled("stories") && showStoryViewer && (
         <StoryViewer
           stories={mockStoryData}
           initialStoryIndex={selectedStoryIndex}
@@ -446,11 +478,8 @@ const ExploreScreen = () => {
       )}
 
       {/* Story Creator Modal */}
-      {showStoryCreator && (
-        <StoryCreator
-          onClose={() => setShowStoryCreator(false)}
-          onPublish={handlePublishStory}
-        />
+      {isEnabled("stories") && showStoryCreator && (
+        <StoryCreator onClose={() => setShowStoryCreator(false)} />
       )}
     </div>
   );

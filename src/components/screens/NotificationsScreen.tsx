@@ -9,10 +9,13 @@ import { MOCK_NOTIFICATIONS } from "@/data/notifications";
 import { mockOr, USE_MOCK } from "@/lib/mock";
 import { notificationsApi } from "@/services/api";
 import { toNotification, type ApiNotification } from "@/services/adapters";
+import { useNavigate } from "react-router-dom";
+import type { Notification } from "@/types";
 
 const NotificationsScreen = () => {
   const [notifications, setNotifications] = useState(mockOr(MOCK_NOTIFICATIONS, []));
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data } = useQuery({
     queryKey: ["notifications"],
@@ -43,6 +46,16 @@ const NotificationsScreen = () => {
     } finally {
       refreshBadge();
     }
+  };
+
+  /**
+   * What the action button does. Every notification the backend sends is about a
+   * ride, so the button opens it and marks the row read on the way. Without a
+   * ride id there is nowhere to go, so it only marks read.
+   */
+  const openNotification = (notification: Notification) => {
+    if (!notification.isRead) markAsRead(notification.id);
+    if (notification.rideId) navigate(`/ride/${encodeURIComponent(notification.rideId)}`);
   };
 
   const markAsRead = async (id: string | number) => {
@@ -148,6 +161,12 @@ const NotificationsScreen = () => {
                           <Button
                             size="sm"
                             className="bg-orange-500 hover:bg-orange-600 text-white text-xs h-7 px-3 flex-shrink-0"
+                            onClick={(e) => {
+                              // The row itself marks read on click; without this
+                              // the button would fire that too and double up.
+                              e.stopPropagation();
+                              openNotification(notification);
+                            }}
                           >
                             {notification.action}
                           </Button>
@@ -195,6 +214,10 @@ const NotificationsScreen = () => {
                               size="sm"
                               variant="outline"
                               className="text-xs h-7 px-3 flex-shrink-0 border-gray-200 text-gray-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openNotification(notification);
+                              }}
                             >
                               {notification.action}
                             </Button>

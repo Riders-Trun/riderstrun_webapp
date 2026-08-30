@@ -23,9 +23,11 @@ interface StoryViewerProps {
   stories: Story[];
   initialStoryIndex: number;
   onClose: () => void;
+  /** Optional: no reply endpoint exists yet, so callers may have nowhere to send one. */
+  onReply?: (storyId: number, text: string) => void;
 }
 
-const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewerProps) => {
+const StoryViewer = ({ stories, initialStoryIndex, onClose, onReply }: StoryViewerProps) => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -89,11 +91,14 @@ const StoryViewer = ({ stories, initialStoryIndex, onClose }: StoryViewerProps) 
     }
   };
 
+  // Replies have nowhere to go: there is no stories endpoint, let alone a reply
+  // one. Clearing the box would look like the message was sent, so the reply is
+  // handed to the caller if it wants it and otherwise left in place.
   const handleSendReply = () => {
-    if (replyText.trim()) {
-      console.log("Sending reply:", replyText, "to story:", currentStory.id);
-      setReplyText("");
-    }
+    const text = replyText.trim();
+    if (!text) return;
+    onReply?.(currentStory.id, text);
+    if (onReply) setReplyText("");
   };
 
   if (!currentStory || !currentSlide) return null;

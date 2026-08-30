@@ -11,9 +11,14 @@ interface RouteDetailsProps {
     maxRiders: string;
   };
   onFormDataChange: (updates: Partial<{ startPoint: string; destination: string; maxRiders: string }>) => void;
+  /** Field name → message, from validateRideForm. Empty until a publish is attempted. */
+  errors?: Record<string, string>;
 }
 
-const RouteDetails = ({ formData, onFormDataChange }: RouteDetailsProps) => {
+const FieldError = ({ message }: { message?: string }) =>
+  message ? <p className="text-xs text-red-600 mt-1">{message}</p> : null;
+
+const RouteDetails = ({ formData, onFormDataChange, errors = {} }: RouteDetailsProps) => {
   return (
     <Card>
       <CardHeader>
@@ -30,7 +35,9 @@ const RouteDetails = ({ formData, onFormDataChange }: RouteDetailsProps) => {
             placeholder="e.g., Cubbon Park, Bangalore"
             value={formData.startPoint}
             onChange={(e) => onFormDataChange({startPoint: e.target.value})}
+            aria-invalid={Boolean(errors.startPoint)}
           />
+          <FieldError message={errors.startPoint} />
         </div>
         
         <div>
@@ -40,7 +47,9 @@ const RouteDetails = ({ formData, onFormDataChange }: RouteDetailsProps) => {
             placeholder="e.g., Nandi Hills"
             value={formData.destination}
             onChange={(e) => onFormDataChange({destination: e.target.value})}
+            aria-invalid={Boolean(errors.destination)}
           />
+          <FieldError message={errors.destination} />
         </div>
 
         <div>
@@ -48,10 +57,14 @@ const RouteDetails = ({ formData, onFormDataChange }: RouteDetailsProps) => {
           <Input
             id="maxRiders"
             type="number"
-            placeholder="e.g., 15"
+            min={2}
+            max={50}
+            placeholder="Leave blank for no limit"
             value={formData.maxRiders}
             onChange={(e) => onFormDataChange({maxRiders: e.target.value})}
+            aria-invalid={Boolean(errors.maxRiders)}
           />
+          <FieldError message={errors.maxRiders} />
         </div>
       </CardContent>
     </Card>

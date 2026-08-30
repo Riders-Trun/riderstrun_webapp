@@ -21,6 +21,16 @@ import {
   Database,
   Globe,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { healthApi, api } from "@/services/api";
@@ -367,6 +377,15 @@ const RidesTab = ({ search, onSearchChange }: { search: string; onSearchChange: 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "rides"] }),
   });
 
+  const deleteRide = useMutation({
+    mutationFn: (rideId: string) => adminApi.deleteRide(rideId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "rides"] }),
+  });
+
+  // Delete is the one action here that participants cannot see coming and no
+  // admin can undo, so it asks first and names the ride it is about to remove.
+  const [rideToDelete, setRideToDelete] = useState<AdminRide | null>(null);
+
   const rides = ridesRes?.data?.rides || [];
   const filteredRides = rides.filter(
     (r) =>
@@ -467,6 +486,15 @@ const RidesTab = ({ search, onSearchChange }: { search: string; onSearchChange: 
                       {cancelRide.isPending ? "Cancelling..." : "Cancel"}
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs text-red-600 border-red-300"
+                    disabled={deleteRide.isPending}
+                    onClick={() => setRideToDelete(ride)}
+                  >
+                    Delete
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -476,6 +504,29 @@ const RidesTab = ({ search, onSearchChange }: { search: string; onSearchChange: 
           )}
         </div>
       )}
+
+      <AlertDialog open={rideToDelete !== null} onOpenChange={(open) => !open && setRideToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this ride?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{rideToDelete?.title}" will be removed along with its roster. Riders who joined are
+              not told. Cancelling the ride instead leaves it visible with a cancelled status.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (rideToDelete) deleteRide.mutate(rideToDelete.id);
+                setRideToDelete(null);
+              }}
+            >
+              Delete ride
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -179,7 +179,9 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+    // Empty, not [state]: setState is stable, so the only thing the old dep did
+    // was unsubscribe and resubscribe this listener on every single toast.
+  }, [])
 
   return {
     ...state,

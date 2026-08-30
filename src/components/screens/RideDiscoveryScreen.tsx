@@ -19,15 +19,20 @@ import RouteTab from "@/components/ride-discovery/RouteTab";
 import TalksTab from "@/components/ride-discovery/TalksTab";
 import PhotosTab from "@/components/ride-discovery/PhotosTab";
 import { getMockRideData } from "@/data/rideDiscovery";
-import { mockOr } from "@/lib/mock";
+import { mockOr, USE_MOCK } from "@/lib/mock";
+import { useToast } from "@/hooks/use-toast";
 
 const RideDiscoveryScreen = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
-  const [isLoading, setIsLoading] = useState(true);
+  // The skeleton exists to show the demo loading state. There is no request to
+  // wait for, so outside mock mode it would be a second of stalling for nothing.
+  const [isLoading, setIsLoading] = useState(USE_MOCK);
 
   useEffect(() => {
+    if (!USE_MOCK) return;
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -45,6 +50,25 @@ const RideDiscoveryScreen = () => {
     photos: [],
     pastGroups: [],
   });
+
+  const handleShareRoute = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: rideData.title ?? "Route", url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied", description: "Share this route with your crew." });
+    } catch (error) {
+      if ((error as Error)?.name === "AbortError") return;
+      toast({
+        title: "Could not share",
+        description: "Copy the link from the address bar instead.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -177,7 +201,7 @@ const RideDiscoveryScreen = () => {
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-4">
           <Button
-            onClick={() => navigate("/plan-ride")}
+            onClick={() => navigate(id ? `/plan-ride?route=${encodeURIComponent(id)}` : "/plan-ride")}
             className="bg-orange-500 hover:bg-orange-600 text-white"
           >
             <Calendar className="w-4 h-4 mr-2" />
@@ -186,6 +210,7 @@ const RideDiscoveryScreen = () => {
           <Button
             variant="outline"
             className="border-orange-200 text-orange-600 hover:bg-orange-50"
+            onClick={handleShareRoute}
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share Route

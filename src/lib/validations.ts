@@ -3,7 +3,9 @@ import { z } from "zod";
 export const rideFormSchema = z.object({
   title: z
     .string()
-    .min(3, "Title must be at least 3 characters")
+    // 5, not 3: the server's RideSchema requires 5 and would reject a shorter
+    // title after the form had already accepted it.
+    .min(5, "Title must be at least 5 characters")
     .max(100, "Title must be under 100 characters"),
   type: z.string().min(1, "Please select a ride type"),
   date: z.string().min(1, "Please select a date"),

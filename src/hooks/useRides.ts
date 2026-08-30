@@ -76,6 +76,17 @@ export const useCreateRide = () => {
   });
 };
 
+export const useUpdateRide = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      ridesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rides"] });
+    },
+  });
+};
+
 export const useJoinRide = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -83,6 +94,18 @@ export const useJoinRide = () => {
     mutationFn: ({ rideId, tripCode }: { rideId: string; tripCode?: string }) =>
       ridesApi.join(rideId, tripCode),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rides"] });
+    },
+  });
+};
+
+export const useLeaveRide = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (rideId: string) => ridesApi.leave(rideId),
+    onSuccess: () => {
+      // Invalidate the whole tree: leaving changes the My Rides buckets and the
+      // participant count shown on the public feed and the detail screen.
       queryClient.invalidateQueries({ queryKey: ["rides"] });
     },
   });

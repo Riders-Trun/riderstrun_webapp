@@ -8,7 +8,8 @@ import type { StoryContent } from "@/types";
 
 interface StoryCreatorProps {
   onClose: () => void;
-  onPublish: (story: StoryContent) => void;
+  /** Optional: there is no stories endpoint yet, so a caller may have nowhere to publish to. */
+  onPublish?: (story: StoryContent) => void;
 }
 
 const StoryCreator = ({ onClose, onPublish }: StoryCreatorProps) => {
@@ -62,7 +63,7 @@ const StoryCreator = ({ onClose, onPublish }: StoryCreatorProps) => {
     };
 
     if ((storyType === "image" && selectedImage) || (storyType === "text" && textContent.trim())) {
-      onPublish(story);
+      onPublish?.(story);
       onClose();
     }
   };

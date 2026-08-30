@@ -1,10 +1,12 @@
 
 import { mockOr } from "@/lib/mock";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { validateRideForm } from "@/lib/validations";
-import { useCreateRide } from "@/hooks/useRides";
+import { useCreateRide, useUpdateRide, useRideById } from "@/hooks/useRides";
+import { fromRideForm } from "@/services/adapters";
 import GlobalHeader from "@/components/GlobalHeader";
 import UserStats from "@/components/ride-planning/UserStats";
 import PopularRoutes from "@/components/ride-planning/PopularRoutes";
@@ -16,7 +18,25 @@ import PitStops from "@/components/ride-planning/PitStops";
 import RideRules from "@/components/ride-planning/RideRules";
 import RideDescription from "@/components/ride-planning/RideDescription";
 
+const EMPTY_FORM = {
+  title: "",
+  type: "",
+  date: "",
+  time: "",
+  startPoint: "",
+  destination: "",
+  maxRiders: "",
+  description: "",
+  role: "planner",
+  selectedRoute: ""
+};
+
 const PlanRideScreen = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // `?edit=<rideId>` turns this screen into an edit form for an existing ride.
+  const editRideId = searchParams.get("edit");
+
   const [formData, setFormData] = useState({
     title: "",
     type: "",
@@ -35,6 +55,33 @@ const PlanRideScreen = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const createRide = useCreateRide();
+  const updateRide = useUpdateRide();
+  const { data: rideBeingEdited } = useRideById(editRideId ?? "");
+
+  const isEditing = Boolean(editRideId);
+  const isSaving = createRide.isPending || updateRide.isPending;
+
+  // Fill the form once the ride being edited arrives. Keyed on the ride's id so
+  // it does not overwrite what the user has typed on every re-render.
+  useEffect(() => {
+    if (!rideBeingEdited) return;
+    const start = new Date(rideBeingEdited.startDate ?? "");
+    const valid = !Number.isNaN(start.getTime());
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    setFormData((prev) => ({
+      ...prev,
+      title: rideBeingEdited.title ?? "",
+      type: rideBeingEdited.type ?? "",
+      // The date and time inputs want local values, not the ISO instant.
+      date: valid ? `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}` : "",
+      time: valid ? `${pad(start.getHours())}:${pad(start.getMinutes())}` : "",
+      startPoint: rideBeingEdited.startLocation ?? "",
+      destination: rideBeingEdited.destination ?? "",
+      maxRiders: rideBeingEdited.maxRiders ? String(rideBeingEdited.maxRiders) : "",
+      description: rideBeingEdited.description ?? "",
+    }));
+  }, [rideBeingEdited]);
 
   // Demo-only: streaks and points have no backend. Zeros outside mock mode
   // rather than crediting the rider with 23 rides they never organised.
@@ -134,6 +181,18 @@ const PlanRideScreen = () => {
     });
   };
 
+  // Arriving from "Plan This Route" on the discovery screen. Preselects the route
+  // when it is one this screen actually knows; an unknown id is ignored rather
+  // than half-filling the form with nothing.
+  const routeParam = searchParams.get("route");
+  useEffect(() => {
+    if (!routeParam || isEditing) return;
+    const match = popularRoutes.find((route) => route.id === routeParam);
+    if (match) handleRouteSelect(match);
+    // Only re-run when the incoming route changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeParam]);
+
   const handleRuleToggle = (rule: string) => {
     setRules(prev => 
       prev.includes(rule) 
@@ -154,6 +213,13 @@ const PlanRideScreen = () => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
+  // Was a "Preview" button that did nothing at all. There is no preview screen to
+  // send anyone to, so the slot now does the thing a half-filled form actually
+  // needs — leave without publishing — rather than continuing to look clickable.
+  const handleCancel = () => {
+    navigate(isEditing && editRideId ? `/ride/${editRideId}` : "/my-rides");
+  };
+
   const handlePublish = () => {
     const result = validateRideForm(formData);
     if (!result.success) {
@@ -167,17 +233,49 @@ const PlanRideScreen = () => {
       return;
     }
     setFormErrors({});
-    createRide.mutate(
-      { ...result.data, pitStops, rules },
-      {
-        onSuccess: () => {
-          toast({ title: "Ride Published!", description: "Your ride has been created successfully." });
-        },
-        onError: (error: Error) => {
-          toast({ title: "Failed to publish", description: error.message, variant: "destructive" });
-        },
-      }
-    );
+
+    // The form's own field names are not what the API accepts — see fromRideForm.
+    const body = fromRideForm(result.data, { pitStops, rules });
+
+    const onError = (error: Error) => {
+      toast({
+        title: isEditing ? "Failed to save" : "Failed to publish",
+        description: error.message,
+        variant: "destructive",
+      });
+    };
+
+    if (isEditing && editRideId) {
+      updateRide.mutate(
+        { id: editRideId, data: body },
+        {
+          onSuccess: () => {
+            toast({ title: "Changes saved", description: "Your ride has been updated." });
+            navigate(`/ride/${editRideId}`);
+          },
+          onError,
+        }
+      );
+      return;
+    }
+
+    createRide.mutate(body, {
+      onSuccess: (response) => {
+        toast({ title: "Ride Published!", description: "Your ride has been created successfully." });
+
+        // Clear the form before leaving. Without this the state survives in the
+        // route cache, so coming back to plan a second ride showed the first one
+        // still filled in — and re-submitting it created a duplicate.
+        setFormData(EMPTY_FORM);
+        setPitStops([]);
+        setRules([]);
+
+        const created = response?.data as { ride?: { id?: string }; id?: string } | undefined;
+        const newRideId = created?.ride?.id ?? created?.id;
+        navigate(newRideId ? `/ride/${newRideId}` : "/my-rides");
+      },
+      onError,
+    });
   };
 
   return (
@@ -209,14 +307,16 @@ const PlanRideScreen = () => {
 
         <QuickPresets onPresetSelect={handlePresetSelect} />
 
-        <BasicInfo 
+        <BasicInfo
           formData={formData}
           onFormDataChange={handleFormDataChange}
+          errors={formErrors}
         />
 
-        <RouteDetails 
+        <RouteDetails
           formData={formData}
           onFormDataChange={handleFormDataChange}
+          errors={formErrors}
         />
 
         <PitStops 
@@ -238,15 +338,21 @@ const PlanRideScreen = () => {
       {/* Bottom Actions */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
         <div className="flex gap-3">
-          <Button variant="outline" className="flex-1">
-            Preview
+          <Button variant="outline" className="flex-1" onClick={handleCancel} disabled={isSaving}>
+            Cancel
           </Button>
           <Button
             className="flex-1 bg-orange-500 hover:bg-orange-600"
             onClick={handlePublish}
-            disabled={createRide.isPending}
+            disabled={isSaving}
           >
-            {createRide.isPending ? "Publishing..." : (formData.role === "organizer" ? "Publish as Organizer" : "Publish Ride")}
+            {isSaving
+              ? (isEditing ? "Saving..." : "Publishing...")
+              : isEditing
+                ? "Save Changes"
+                : formData.role === "organizer"
+                  ? "Publish as Organizer"
+                  : "Publish Ride"}
           </Button>
         </div>
       </div>

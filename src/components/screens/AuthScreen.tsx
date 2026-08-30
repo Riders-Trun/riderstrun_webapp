@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Loader, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useConfig } from "@/contexts/ConfigContext";
 
 const AuthScreen = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +17,7 @@ const AuthScreen = () => {
   const { login, signup } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isEnabled } = useConfig();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +102,16 @@ const AuthScreen = () => {
               ) : null}
               {isLogin ? "Sign In" : "Create Account"}
             </Button>
+
+            {/* Only on the sign-in side, and only when the server can actually
+                deliver a reset email — otherwise the link goes nowhere useful. */}
+            {isLogin && isEnabled("passwordReset") && (
+              <p className="text-center">
+                <Link to="/forgot-password" className="text-sm text-orange-600 hover:text-orange-700">
+                  Forgot your password?
+                </Link>
+              </p>
+            )}
           </form>
 
           <div className="mt-6 text-center">

@@ -1,4 +1,4 @@
-import type { Ride, MyRide, UserProfile, Notification } from "@/types";
+import type { Ride, MyRide, UserProfile, Notification, NearbyRider } from "@/types";
 
 /**
  * Translates backend ride rows into the view models the UI renders.
@@ -323,5 +323,110 @@ export function toNotification(api: ApiNotification): Notification {
     time: relativeTime(api.created_at),
     isRead: api.is_read,
     action: NOTIFICATION_ACTIONS[api.type] ?? "View",
+    rideId: api.ride_id ?? undefined,
+  };
+}
+
+
+// ── Riders (social search & suggestions) ──────────────────────────────────────
+
+/**
+ * A rider row from `/api/social/search` or `/api/social/suggestions`.
+ *
+ * `user_id` is present on suggestions but NOT on Postgres search results, which
+ * project only the public profile columns. That is why it is optional here and
+ * why `toNearbyRider` can return a rider with no id — see the note there.
+ */
+export interface ApiRider {
+  user_id?: number | string;
+  userId?: number | string;
+  username?: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  city?: string | null;
+  rides_together_count?: number | string;
+  reason?: string | null;
+}
+
+/**
+ * Rider row → the card's view model.
+ *
+ * Several fields the card can show — live status, streak, points, distance away,
+ * riding styles — have no backend source at all. Rather than invent them, they
+ * are left at neutral values: status is always "looking", and the optional ones
+ * stay undefined so the card omits those badges entirely.
+ *
+ * `id` is 0 when the row carried none. Callers must treat a 0 id as "cannot act
+ * on this rider" and withhold Connect, because there is no id to send.
+ */
+export function toNearbyRider(api: ApiRider): NearbyRider {
+  const id = toNumber(api.user_id ?? api.userId) ?? 0;
+  return {
+    id,
+    name: api.full_name || api.username || "Rider",
+    avatar: api.avatar_url ?? "",
+    bike: "",
+    points: 0,
+    streak: 0,
+    // The card renders this verbatim, so it carries the city — the only
+    // location the backend actually knows — rather than a fabricated "2.4 km".
+    distance: api.city ?? "",
+    status: "looking",
+    rideStyle: [],
+    lastSeen: api.reason ?? "",
+    isOnline: false,
+    mutualConnections: toNumber(api.rides_together_count),
+  };
+}
+
+
+// ── Ride form → API payload ───────────────────────────────────────────────────
+
+export interface RideFormValues {
+  title: string;
+  type: string;
+  date: string;
+  time: string;
+  startPoint: string;
+  destination: string;
+  maxRiders: string;
+  description?: string;
+  role?: string;
+  selectedRoute?: string;
+}
+
+/**
+ * The plan-a-ride form → the body `POST /api/rides` actually accepts.
+ *
+ * This layer was missing entirely: the form's own field names were sent as-is,
+ * so the server saw `startPoint` where it required `start_location` and no
+ * `start_date` at all, and rejected every submission. Nothing caught it because
+ * the screen was only ever exercised in mock mode.
+ *
+ * `pitStops` and `rules` have no columns of their own; they ride along in
+ * `requirements`, which is the schema's free-form object.
+ */
+export function fromRideForm(
+  form: RideFormValues,
+  extras: { pitStops: string[]; rules: string[] }
+): Record<string, unknown> {
+  const maxRiders = toNumber(form.maxRiders);
+
+  return {
+    title: form.title,
+    ...(form.description ? { description: form.description } : {}),
+    // The two inputs are a local date and a local time. Constructing the Date
+    // from "YYYY-MM-DDTHH:mm" reads them in the rider's own zone, which is what
+    // they meant, and toISOString hands the server the UTC instant it wants.
+    start_date: new Date(`${form.date}T${form.time}`).toISOString(),
+    start_location: form.startPoint,
+    ...(form.destination ? { end_location: form.destination } : {}),
+    ...(form.type ? { ride_type: form.type } : {}),
+    // Blank means no limit, which the column stores as NULL — so omit it rather
+    // than sending 0, which would be a ride nobody can join.
+    ...(maxRiders !== undefined ? { max_riders: maxRiders } : {}),
+    ...(extras.pitStops.length || extras.rules.length
+      ? { requirements: { pitStops: extras.pitStops, rules: extras.rules } }
+      : {}),
   };
 }

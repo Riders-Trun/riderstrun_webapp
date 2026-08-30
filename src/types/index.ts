@@ -208,6 +208,11 @@ export interface Notification {
   time: string;
   isRead: boolean;
   action: string;
+  /**
+   * The ride this notification is about, when there is one. Carried through so
+   * the action button has somewhere to go — without it every button was inert.
+   */
+  rideId?: string;
 }
 
 // ===== My Rides Types =====
@@ -240,6 +245,14 @@ export interface NearbyRider {
   rideStyle: string[];
   lastSeen: string;
   isOnline: boolean;
+  /**
+   * Optional because no backend supplies them yet. NearbyRiderCard kept its own
+   * copy of this interface carrying these three; they live here now so the card
+   * and the adapters agree on one shape.
+   */
+  bio?: string;
+  lastRideLocation?: string;
+  mutualConnections?: number;
 }
 
 export interface CrewIntent {

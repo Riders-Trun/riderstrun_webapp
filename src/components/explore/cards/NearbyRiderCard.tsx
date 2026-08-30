@@ -4,23 +4,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface NearbyRider {
-  id: number;
-  name: string;
-  avatar: string;
-  bike: string;
-  points: number;
-  streak: number;
-  distance: string;
-  status: "active" | "upcoming" | "looking";
-  rideStyle: string[];
-  lastSeen: string;
-  isOnline: boolean;
-  bio?: string;
-  lastRideLocation?: string;
-  mutualConnections?: number;
-}
+import type { NearbyRider } from "@/types";
 
 interface NearbyRiderCardProps {
   rider: NearbyRider;

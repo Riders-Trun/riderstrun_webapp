@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { toRide, toMyRide, toRideDetail, formatDistance, composeLocation, type ApiRide } from "./adapters";
+import {
+  toRide,
+  toMyRide,
+  toRideDetail,
+  formatDistance,
+  composeLocation,
+  fromRideForm,
+  toNearbyRider,
+  type ApiRide,
+} from "./adapters";
 import { stableSeed } from "@/lib/rideUtils";
 
 /**
@@ -192,5 +201,89 @@ describe("stableSeed", () => {
     expect((seed % 4) + 5).toBeLessThanOrEqual(8);
     expect(((seed * 7) % 30) + 10).toBeGreaterThanOrEqual(10);
     expect((seed % 3) + 1).toBeGreaterThanOrEqual(1);
+  });
+});
+
+
+/**
+ * These pin down the mapping that was missing: the form used to be posted with
+ * its own field names, which the server rejected on every submission.
+ */
+describe("fromRideForm", () => {
+  const form = {
+    title: "Nandi Sunrise Sprint",
+    type: "breakfast",
+    date: "2026-09-12",
+    time: "06:00",
+    startPoint: "Cubbon Park, Bangalore",
+    destination: "Nandi Hills",
+    maxRiders: "15",
+    description: "Early start, coffee at the top.",
+    role: "planner",
+    selectedRoute: "",
+  };
+
+  it("maps every form field onto the name the API requires", () => {
+    const body = fromRideForm(form, { pitStops: [], rules: [] });
+
+    expect(body.title).toBe("Nandi Sunrise Sprint");
+    expect(body.start_location).toBe("Cubbon Park, Bangalore");
+    expect(body.end_location).toBe("Nandi Hills");
+    expect(body.ride_type).toBe("breakfast");
+    expect(body.max_riders).toBe(15);
+    // None of the form's own names may survive into the body.
+    expect(body).not.toHaveProperty("startPoint");
+    expect(body).not.toHaveProperty("maxRiders");
+    expect(body).not.toHaveProperty("role");
+  });
+
+  it("combines the date and time inputs into one ISO instant", () => {
+    const body = fromRideForm(form, { pitStops: [], rules: [] });
+    // Compared against the same local construction rather than a fixed string,
+    // so the test does not depend on the machine's timezone.
+    expect(body.start_date).toBe(new Date("2026-09-12T06:00").toISOString());
+  });
+
+  it("omits max_riders when the field is blank, meaning no limit", () => {
+    const body = fromRideForm({ ...form, maxRiders: "" }, { pitStops: [], rules: [] });
+    expect(body).not.toHaveProperty("max_riders");
+  });
+
+  it("carries pit stops and rules in requirements", () => {
+    const body = fromRideForm(form, { pitStops: ["Coffee stop"], rules: ["Helmet required"] });
+    expect(body.requirements).toEqual({
+      pitStops: ["Coffee stop"],
+      rules: ["Helmet required"],
+    });
+  });
+
+  it("sends no requirements key when there are neither", () => {
+    const body = fromRideForm(form, { pitStops: [], rules: [] });
+    expect(body).not.toHaveProperty("requirements");
+  });
+});
+
+describe("toNearbyRider", () => {
+  it("prefers the full name and carries the city as the location line", () => {
+    const rider = toNearbyRider({
+      user_id: 7,
+      username: "ghost_rider",
+      full_name: "Priya Sharma",
+      city: "Bangalore",
+      rides_together_count: "3",
+    });
+
+    expect(rider.id).toBe(7);
+    expect(rider.name).toBe("Priya Sharma");
+    expect(rider.distance).toBe("Bangalore");
+    expect(rider.mutualConnections).toBe(3);
+  });
+
+  it("falls back to the username when there is no full name", () => {
+    expect(toNearbyRider({ user_id: 7, username: "ghost_rider" }).name).toBe("ghost_rider");
+  });
+
+  it("yields id 0 for a search row that carries none, so Connect can be withheld", () => {
+    expect(toNearbyRider({ username: "ghost_rider" }).id).toBe(0);
   });
 });
