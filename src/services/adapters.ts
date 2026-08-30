@@ -1,4 +1,4 @@
-import type { Ride, MyRide, UserProfile, Notification, NearbyRider } from "@/types";
+import type { Ride, MyRide, UserProfile, Notification, NearbyRider, CrewIntent } from "@/types";
 
 /**
  * Translates backend ride rows into the view models the UI renders.
@@ -309,6 +309,7 @@ const NOTIFICATION_ACTIONS: Record<string, string> = {
   ride_comment: "View comment",
   ride_completed: "View ride",
   ride_left: "View ride",
+  crew_joined: "View crew",
   connection_request: "View request",
   connection_accepted: "View profile",
 };
@@ -431,5 +432,215 @@ export function fromRideForm(
     ...(extras.pitStops.length || extras.rules.length
       ? { requirements: { pitStops: extras.pitStops, rules: extras.rules } }
       : {}),
+  };
+}
+
+
+// ── Stories ───────────────────────────────────────────────────────────────────
+
+/** A story group as the carousel renders it: one entry per author. */
+export interface StoryCarouselEntry {
+  id: number;
+  user: { name: string; avatar: string; isViewed?: boolean };
+  preview: string;
+  hasNew?: boolean;
+}
+
+/** The same group as the viewer renders it: the author, then their stories. */
+export interface StoryViewerEntry {
+  id: number;
+  user: { name: string; avatar: string };
+  content: {
+    id: string;
+    type: "image" | "text";
+    url?: string;
+    text?: string;
+    caption?: string;
+    backgroundColor?: string;
+    textColor?: string;
+  }[];
+  timestamp: string;
+}
+
+interface ApiStoryGroupShape {
+  user_id: number;
+  username?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  is_self?: boolean;
+  all_viewed?: boolean;
+  items?: {
+    id: string;
+    story_type: "image" | "text";
+    content: string;
+    caption?: string | null;
+    background_color?: string | null;
+    text_color?: string | null;
+    created_at?: string;
+    is_viewed?: boolean;
+  }[];
+}
+
+const authorName = (g: ApiStoryGroupShape) =>
+  g.is_self ? "Your story" : g.full_name || g.username || "Rider";
+
+/**
+ * Story group → the carousel row.
+ *
+ * `preview` is the thumbnail behind the avatar ring. A text story has no image
+ * to show, so it falls back to the author's avatar rather than a broken one.
+ */
+export function toStoryCarouselEntry(group: ApiStoryGroupShape): StoryCarouselEntry {
+  const firstImage = (group.items ?? []).find((item) => item.story_type === "image");
+  return {
+    id: group.user_id,
+    user: {
+      name: authorName(group),
+      avatar: group.avatar_url ?? "",
+      isViewed: group.all_viewed ?? false,
+    },
+    preview: firstImage?.content ?? group.avatar_url ?? "",
+    hasNew: !(group.all_viewed ?? false),
+  };
+}
+
+/**
+ * Story group → the full-screen viewer.
+ *
+ * Each item becomes one slide, and `content` means different things by type —
+ * a URL for an image, the words themselves for text — so it is split into `url`
+ * and `text` here rather than leaving the viewer to guess.
+ */
+export function toStoryViewerEntry(group: ApiStoryGroupShape): StoryViewerEntry {
+  const items = group.items ?? [];
+  return {
+    id: group.user_id,
+    user: { name: authorName(group), avatar: group.avatar_url ?? "" },
+    content: items.map((item) => ({
+      id: item.id,
+      type: item.story_type,
+      url: item.story_type === "image" ? item.content : undefined,
+      text: item.story_type === "text" ? item.content : undefined,
+      caption: item.caption ?? undefined,
+      backgroundColor: item.background_color ?? undefined,
+      textColor: item.text_color ?? undefined,
+    })),
+    timestamp: relativeTime(items[0]?.created_at),
+  };
+}
+
+
+// ── Ride moments ──────────────────────────────────────────────────────────────
+
+interface ApiMomentShape {
+  id: string;
+  ride_id: string;
+  ride_title: string;
+  image: string;
+  location?: string | null;
+  date?: string | null;
+  participant_count?: number;
+  rider: { user_id: number; username?: string | null; full_name?: string | null; avatar_url?: string | null };
+  tagged_riders?: string[];
+  tagged_overflow?: number;
+  next_ride?: { id: string; title: string; start_date: string } | null;
+}
+
+/** The moment view model the card renders. */
+export interface MomentView {
+  id: string;
+  rideId: string;
+  rider: { name: string; avatar: string };
+  image: string;
+  location: string;
+  rideTitle: string;
+  date: string;
+  participantsCount: number;
+  taggedRiders: string[];
+  hasUpcomingRide: boolean;
+  upcomingRideId?: string;
+  upcomingRideDate?: string;
+}
+
+/**
+ * API moment → card.
+ *
+ * `taggedRiders` absorbs the overflow count as a final "+N more" entry, because
+ * the card renders the array verbatim and has nowhere else to put the number.
+ */
+export function toMoment(api: ApiMomentShape): MomentView {
+  const named = api.tagged_riders ?? [];
+  const overflow = api.tagged_overflow ?? 0;
+
+  return {
+    id: api.id,
+    rideId: api.ride_id,
+    rider: {
+      name: api.rider.full_name || api.rider.username || "Rider",
+      avatar: api.rider.avatar_url ?? "",
+    },
+    image: api.image,
+    location: api.location ?? "",
+    rideTitle: api.ride_title,
+    date: formatRideDate(api.date),
+    participantsCount: api.participant_count ?? 0,
+    taggedRiders: overflow > 0 ? [...named, `+${overflow} more`] : named,
+    hasUpcomingRide: Boolean(api.next_ride),
+    upcomingRideId: api.next_ride?.id,
+    upcomingRideDate: api.next_ride ? formatRideDate(api.next_ride.start_date) : undefined,
+  };
+}
+
+
+// ── Crews ─────────────────────────────────────────────────────────────────────
+
+interface ApiCrewShape {
+  id: string;
+  creator_id: number;
+  username?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  title: string;
+  description?: string | null;
+  looking_for: number;
+  member_count?: number;
+  ride_type?: string | null;
+  time_preference?: string | null;
+  skill_level?: string | null;
+  route?: string | null;
+  speed?: string | null;
+  ride_date?: string | null;
+  requirements?: string[];
+  created_at?: string;
+}
+
+/**
+ * API crew → the CrewFinder card.
+ *
+ * `lookingFor` becomes the crew's *full size* here, not the number still wanted.
+ * The card compares `currentMembers >= lookingFor` to decide whether it is full,
+ * so it needs the total — while the API speaks in riders-still-wanted, which is
+ * how the person writing the intent thinks about it. This is where the two meet.
+ */
+export function toCrewIntent(api: ApiCrewShape): CrewIntent {
+  return {
+    id: api.id,
+    creator: {
+      name: api.full_name || api.username || "Rider",
+      avatar: api.avatar_url ?? "",
+      // No rating: nothing in this system computes one.
+    },
+    title: api.title,
+    description: api.description ?? "",
+    lookingFor: api.looking_for + 1,
+    currentMembers: api.member_count ?? 0,
+    rideType: api.ride_type ?? "",
+    timePreference: api.time_preference ?? "",
+    skillLevel: api.skill_level ?? "",
+    route: api.route ?? "",
+    speed: api.speed ?? "",
+    date: api.ride_date ? formatRideDate(api.ride_date) : "",
+    requirements: api.requirements ?? [],
+    timeAgo: relativeTime(api.created_at),
   };
 }

@@ -6,9 +6,9 @@ import type { RideMoment } from "@/types/explore";
 
 interface RideMomentCardProps {
   moment: RideMoment;
-  onJoinNextRide?: (momentId: number) => void;
-  onAskForRoute?: (momentId: number) => void;
-  onViewRide?: (momentId: number) => void;
+  onJoinNextRide?: (moment: RideMoment) => void;
+  onAskForRoute?: (moment: RideMoment) => void;
+  onViewRide?: (moment: RideMoment) => void;
 }
 
 const RideMomentCard = ({ 
@@ -109,7 +109,7 @@ const RideMomentCard = ({
           {moment.hasUpcomingRide ? (
             <Button 
               size="sm"
-              onClick={() => onJoinNextRide?.(moment.id)}
+              onClick={() => onJoinNextRide?.(moment)}
               className="flex-1 bg-green-500 hover:bg-green-600 text-xs"
             >
               Join Next Ride
@@ -118,7 +118,7 @@ const RideMomentCard = ({
             <Button 
               size="sm"
               variant="outline"
-              onClick={() => onAskForRoute?.(moment.id)}
+              onClick={() => onAskForRoute?.(moment)}
               className="flex-1 border-orange-200 text-orange-600 hover:bg-orange-50 text-xs"
             >
               <Route className="w-3 h-3 mr-1" />
@@ -129,7 +129,7 @@ const RideMomentCard = ({
           <Button 
             size="sm"
             variant="outline"
-            onClick={() => onViewRide?.(moment.id)}
+            onClick={() => onViewRide?.(moment)}
             className="border-gray-200 text-gray-600 hover:bg-gray-50 text-xs px-3"
           >
             View

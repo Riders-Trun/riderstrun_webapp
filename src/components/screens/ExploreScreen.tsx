@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users,
@@ -24,8 +25,15 @@ import StoryViewer from "@/components/explore/stories/StoryViewer";
 import StoryCreator from "@/components/explore/stories/StoryCreator";
 import { NEARBY_RIDERS, CREW_INTENTS, MENTORS } from "@/data/explore";
 import { mockOr, USE_MOCK } from "@/lib/mock";
-import { socialApi } from "@/services/api";
-import { toNearbyRider, type ApiRider } from "@/services/adapters";
+import { socialApi, storiesApi, momentsApi, crewsApi, type ApiStoryGroup } from "@/services/api";
+import {
+  toNearbyRider,
+  toStoryCarouselEntry,
+  toStoryViewerEntry,
+  toMoment,
+  toCrewIntent,
+  type ApiRider,
+} from "@/services/adapters";
 import { useConfig } from "@/contexts/ConfigContext";
 import { useToast } from "@/hooks/use-toast";
 import type { StoryContent, NearbyRider } from "@/types";
@@ -40,7 +48,8 @@ const mentors = mockOr(MENTORS, []);
 // Demo data for ride moments
 const DEMO_RIDE_MOMENTS = [
   {
-    id: 1,
+    id: "demo-moment-1",
+    rideId: "demo-ride-1",
     rider: {
       name: "Alex Johnson",
       avatar: "/api/placeholder/40/40"
@@ -55,7 +64,8 @@ const DEMO_RIDE_MOMENTS = [
     upcomingRideDate: "Jan 20, 2024"
   },
   {
-    id: 2,
+    id: "demo-moment-2",
+    rideId: "demo-ride-2",
     rider: {
       name: "Maya Patel",
       avatar: "/api/placeholder/40/40"
@@ -160,6 +170,7 @@ const SectionComingSoon = ({ title, note }: { title: string; note: string }) => 
 );
 
 const ExploreScreen = () => {
+  const navigate = useNavigate();
   const { isEnabled } = useConfig();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -201,6 +212,97 @@ const ExploreScreen = () => {
     ? NEARBY_RIDERS
     : ((activeQuery.data ?? []) as ApiRider[]).map(toNearbyRider);
 
+  // Stories: live for the caller and their connections. Mock mode keeps the
+  // demo carousel so the screen still demonstrates itself offline.
+  const storiesQuery = useQuery({
+    queryKey: ["stories"],
+    queryFn: () => storiesApi.list(),
+    enabled: !USE_MOCK && isEnabled("stories"),
+  });
+
+  const storyGroups: ApiStoryGroup[] = storiesQuery.data?.data?.stories ?? [];
+
+  const carouselStories = USE_MOCK ? stories : storyGroups.map(toStoryCarouselEntry);
+  const viewerStories = USE_MOCK ? mockStoryData : storyGroups.map(toStoryViewerEntry);
+
+  const publishStory = useMutation({
+    mutationFn: (story: StoryContent) =>
+      storiesApi.create({
+        story_type: story.type,
+        content: story.content,
+        caption: story.caption,
+        background_color: story.backgroundColor,
+        text_color: story.textColor,
+      }),
+    onSuccess: () => {
+      toast({ title: "Story posted", description: "It disappears in 24 hours." });
+      queryClient.invalidateQueries({ queryKey: ["stories"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Could not post story", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Fired per slide as the viewer advances. The endpoint counts a repeat view
+  // once, so there is no need to track what has already been sent.
+  const markStoryViewed = useCallback(
+    (storyId: string, authorId: number) => {
+      if (USE_MOCK) return;
+      storiesApi.markViewed(authorId, storyId).catch(() => {
+        // A missed view is not worth interrupting the story for.
+      });
+    },
+    []
+  );
+
+  // Moments: photos from rides that have finished. Public, so no token needed.
+  const momentsQuery = useQuery({
+    queryKey: ["moments"],
+    queryFn: () => momentsApi.list(),
+    enabled: !USE_MOCK && isEnabled("rideMoments"),
+  });
+
+  const moments = USE_MOCK
+    ? rideMoments
+    : (momentsQuery.data?.data?.moments ?? []).map(toMoment);
+
+  // Crews: an open call for riders. Public to read, like the ride feed.
+  const crewsQuery = useQuery({
+    queryKey: ["crews"],
+    queryFn: () => crewsApi.list(),
+    enabled: !USE_MOCK && isEnabled("crews"),
+  });
+
+  const crews = USE_MOCK
+    ? crewIntents
+    : (crewsQuery.data?.data?.crews ?? []).map(toCrewIntent);
+
+  const joinCrew = useMutation({
+    mutationFn: (crewId: string) => crewsApi.join(crewId),
+    onSuccess: () => {
+      toast({ title: "You're in", description: "The crew's creator has been told." });
+      queryClient.invalidateQueries({ queryKey: ["crews"] });
+    },
+    onError: (error: Error) =>
+      toast({ title: "Could not join", description: error.message, variant: "destructive" }),
+  });
+
+  const createCrew = useMutation({
+    mutationFn: (intent: { title: string; description: string; lookingFor: number; rideType: string }) =>
+      crewsApi.create({
+        title: intent.title,
+        description: intent.description,
+        looking_for: intent.lookingFor,
+        ride_type: intent.rideType,
+      }),
+    onSuccess: () => {
+      toast({ title: "Crew posted", description: "Riders can answer it now." });
+      queryClient.invalidateQueries({ queryKey: ["crews"] });
+    },
+    onError: (error: Error) =>
+      toast({ title: "Could not post", description: error.message, variant: "destructive" }),
+  });
+
   const connect = useMutation({
     // "send" is the API's action name for a connection request; there is no
     // "request" action, and sending one is a 400.
@@ -220,10 +322,12 @@ const ExploreScreen = () => {
   });
 
   // Event handlers
-  const handleStoryClick = (storyId: number) => {
-    const storyIndex = mockStoryData.findIndex(story => story.id === storyId);
-    if (storyIndex !== -1) {
-      setSelectedStoryIndex(storyIndex);
+  // The carousel and the viewer are keyed the same way — one entry per author —
+  // so the id coming back from a tap is the author's, and this finds their group.
+  const handleStoryClick = (authorId: number) => {
+    const index = viewerStories.findIndex(story => story.id === authorId);
+    if (index !== -1) {
+      setSelectedStoryIndex(index);
       setShowStoryViewer(true);
     }
   };
@@ -260,7 +364,7 @@ const ExploreScreen = () => {
       {/* Stories — no endpoint yet, so hidden unless the flag says otherwise. */}
       {isEnabled("stories") && (
         <StoriesCarousel
-          stories={stories}
+          stories={carouselStories}
           onStoryClick={handleStoryClick}
           onAddStory={handleAddStory}
         />
@@ -398,7 +502,12 @@ const ExploreScreen = () => {
           {/* Crew Finder Tab */}
           <TabsContent value="crew" className="px-4 space-y-6 mt-6">
             {isEnabled("crews") ? (
-              <CrewFinder crewIntents={crewIntents} />
+              <CrewFinder
+                crewIntents={crews}
+                onJoinCrew={(crewId) => joinCrew.mutate(crewId)}
+                onCreateIntent={(intent) => createCrew.mutate(intent)}
+                isJoining={joinCrew.isPending}
+              />
             ) : (
               <SectionComingSoon
                 title="Crew Finder"
@@ -419,8 +528,19 @@ const ExploreScreen = () => {
               </div>
               
               <div className="grid grid-cols-1 gap-4">
-                {rideMoments.map((moment) => (
-                  <RideMomentCard key={moment.id} moment={moment} />
+                {moments.map((moment) => (
+                  <RideMomentCard
+                    key={moment.id}
+                    moment={moment}
+                    // All three actions lead to a ride: the one coming up for
+                    // "join", and the one in the photo for the other two — its
+                    // detail screen is where the route and its comments live.
+                    onJoinNextRide={(m) =>
+                      m.upcomingRideId && navigate(`/ride/${m.upcomingRideId}`)
+                    }
+                    onAskForRoute={(m) => m.rideId && navigate(`/ride/${m.rideId}`)}
+                    onViewRide={(m) => m.rideId && navigate(`/ride/${m.rideId}`)}
+                  />
                 ))}
               </div>
             </div>
@@ -478,15 +598,19 @@ const ExploreScreen = () => {
       {/* Story Viewer Modal */}
       {isEnabled("stories") && showStoryViewer && (
         <StoryViewer
-          stories={mockStoryData}
+          stories={viewerStories}
           initialStoryIndex={selectedStoryIndex}
           onClose={() => setShowStoryViewer(false)}
+          onSlideView={markStoryViewed}
         />
       )}
 
       {/* Story Creator Modal */}
       {isEnabled("stories") && showStoryCreator && (
-        <StoryCreator onClose={() => setShowStoryCreator(false)} />
+        <StoryCreator
+          onClose={() => setShowStoryCreator(false)}
+          onPublish={(story) => publishStory.mutate(story)}
+        />
       )}
     </div>
   );

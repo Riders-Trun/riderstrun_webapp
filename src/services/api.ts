@@ -300,6 +300,235 @@ export const socialApi = {
     ),
 };
 
+/**
+ * Stories — 24-hour posts from the caller and their connections.
+ *
+ * A story is addressed by author *and* id: the id alone does not locate it
+ * server-side. Every listing returns the author alongside, so this is never
+ * something the client has to look up.
+ */
+export interface ApiStoryItem {
+  id: string;
+  story_type: "image" | "text";
+  content: string;
+  caption: string | null;
+  background_color: string | null;
+  text_color: string | null;
+  created_at: string;
+  expires_at: string;
+  is_viewed: boolean;
+}
+
+export interface ApiStoryGroup {
+  user_id: number;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  is_self: boolean;
+  all_viewed: boolean;
+  items: ApiStoryItem[];
+}
+
+export const storiesApi = {
+  list: () =>
+    request<ApiResponse<{ stories: ApiStoryGroup[] }>>("/api/stories"),
+  create: (story: {
+    story_type: "image" | "text";
+    content: string;
+    caption?: string;
+    background_color?: string;
+    text_color?: string;
+  }) =>
+    request<ApiResponse<{ story: ApiStoryItem }>>("/api/stories", {
+      method: "POST",
+      body: JSON.stringify(story),
+    }),
+  // Idempotent server-side, so this is safe to fire on every slide change.
+  markViewed: (authorId: number, storyId: string) =>
+    request<ApiResponse<{ viewed: boolean }>>(
+      `/api/stories/${authorId}/${encodeURIComponent(storyId)}/view`,
+      { method: "POST" }
+    ),
+  views: (authorId: number, storyId: string) =>
+    request<ApiResponse<{ views: number }>>(
+      `/api/stories/${authorId}/${encodeURIComponent(storyId)}/views`
+    ),
+  remove: (authorId: number, storyId: string) =>
+    request<ApiResponse<{ deleted: boolean }>>(
+      `/api/stories/${authorId}/${encodeURIComponent(storyId)}`,
+      { method: "DELETE" }
+    ),
+};
+
+/**
+ * Ride moments — photos from rides that have finished.
+ *
+ * Assembled server-side from media, rides and participants; nothing is stored
+ * as a moment. Readable without a token.
+ */
+export interface ApiMoment {
+  id: string;
+  ride_id: string;
+  ride_title: string;
+  image: string;
+  caption: string | null;
+  location: string | null;
+  date: string;
+  participant_count: number;
+  rider: {
+    user_id: number;
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+  tagged_riders: string[];
+  tagged_overflow: number;
+  next_ride: { id: string; title: string; start_date: string } | null;
+}
+
+export const momentsApi = {
+  list: (limit?: number) =>
+    request<ApiResponse<{ moments: ApiMoment[] }>>(
+      `/api/moments${limit ? `?limit=${limit}` : ""}`,
+      { skipAuth: true }
+    ),
+};
+
+/**
+ * Travel diary — the caller's own record of trips.
+ *
+ * Private throughout: there is no route here that takes another rider's id, and
+ * somebody else's entry answers 404 rather than 403.
+ */
+export interface ApiDiaryPhoto {
+  id: string;
+  entry_id: string;
+  photo_url: string;
+  caption: string | null;
+  created_at: string;
+}
+
+export interface ApiDiaryEntry {
+  id: string;
+  title: string;
+  body: string | null;
+  location: string | null;
+  distance_km: number | null;
+  rating: number | null;
+  weather: string | null;
+  tags: string[];
+  entry_date: string;
+  ride_id: string | null;
+  created_at: string;
+  photos: ApiDiaryPhoto[];
+  photo_count: number;
+}
+
+export interface ApiDiaryStats {
+  total_trips: number;
+  total_distance_km: number;
+  total_photos: number;
+  average_rating: number | null;
+}
+
+export interface DiaryEntryInput {
+  title: string;
+  body?: string;
+  location?: string;
+  distance_km?: number;
+  rating?: number;
+  weather?: string;
+  tags?: string[];
+  entry_date: string;
+  ride_id?: string;
+}
+
+export const diaryApi = {
+  list: () => request<ApiResponse<{ entries: ApiDiaryEntry[] }>>("/api/diary"),
+  stats: () => request<ApiResponse<{ stats: ApiDiaryStats }>>("/api/diary/stats"),
+  photos: () => request<ApiResponse<{ photos: ApiDiaryPhoto[] }>>("/api/diary/photos"),
+  create: (entry: DiaryEntryInput) =>
+    request<ApiResponse<{ entry: ApiDiaryEntry }>>("/api/diary", {
+      method: "POST",
+      body: JSON.stringify(entry),
+    }),
+  update: (id: string, fields: Partial<DiaryEntryInput>) =>
+    request<ApiResponse<{ entry: ApiDiaryEntry }>>(`/api/diary/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(fields),
+    }),
+  remove: (id: string) =>
+    request<ApiResponse<{ deleted: boolean }>>(`/api/diary/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }),
+  addPhoto: (id: string, photoUrl: string, caption?: string) =>
+    request<ApiResponse<{ photo: ApiDiaryPhoto }>>(
+      `/api/diary/${encodeURIComponent(id)}/photos`,
+      { method: "POST", body: JSON.stringify({ photo_url: photoUrl, caption }) }
+    ),
+};
+
+/**
+ * Crews — an open call for riders, before a ride exists.
+ *
+ * `looking_for` is how many *more* riders are wanted, not the total: the crew is
+ * full at `looking_for + 1`, counting the creator.
+ */
+export interface ApiCrew {
+  id: string;
+  creator_id: number;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  title: string;
+  description: string | null;
+  looking_for: number;
+  member_count: number;
+  ride_type: string | null;
+  time_preference: string | null;
+  skill_level: string | null;
+  route: string | null;
+  speed: string | null;
+  ride_date: string | null;
+  requirements: string[];
+  status: "open" | "closed";
+  created_at: string;
+}
+
+export interface CrewInput {
+  title: string;
+  description?: string;
+  looking_for: number;
+  ride_type?: string;
+  time_preference?: string;
+  skill_level?: string;
+  route?: string;
+  speed?: string;
+  requirements?: string[];
+}
+
+export const crewsApi = {
+  list: () =>
+    request<ApiResponse<{ crews: ApiCrew[] }>>("/api/crews", { skipAuth: true }),
+  get: (id: string) =>
+    request<ApiResponse<{ crew: ApiCrew; members: Record<string, unknown>[] }>>(
+      `/api/crews/${encodeURIComponent(id)}`
+    ),
+  create: (crew: CrewInput) =>
+    request<ApiResponse<{ crew: ApiCrew }>>("/api/crews", {
+      method: "POST",
+      body: JSON.stringify(crew),
+    }),
+  join: (id: string) =>
+    request<ApiResponse<{ joined: boolean }>>(`/api/crews/${encodeURIComponent(id)}/join`, {
+      method: "POST",
+    }),
+  leave: (id: string) =>
+    request<ApiResponse<{ left: boolean }>>(`/api/crews/${encodeURIComponent(id)}/join`, {
+      method: "DELETE",
+    }),
+};
+
 // Health API
 //
 // Health endpoints are deliberately unenveloped — they answer with the payload

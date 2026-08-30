@@ -12,9 +12,20 @@ interface Story {
     avatar: string;
   };
   content: {
-    type: "image" | "video";
-    url: string;
+    /** The story's own id — each slide is one story, and views are per story. */
+    id?: string;
+    /**
+     * `text` is a real story kind, not a fallback: a rider can post words on a
+     * colour with no image at all, which is what StoryCreator produces.
+     */
+    type: "image" | "video" | "text";
+    /** Present for image and video. */
+    url?: string;
+    /** Present for text. */
+    text?: string;
     caption?: string;
+    backgroundColor?: string;
+    textColor?: string;
   }[];
   timestamp: string;
 }
@@ -25,9 +36,14 @@ interface StoryViewerProps {
   onClose: () => void;
   /** Optional: no reply endpoint exists yet, so callers may have nowhere to send one. */
   onReply?: (storyId: number, text: string) => void;
+  /**
+   * Fired for each story as it comes on screen, so the caller can record a view.
+   * Safe to act on every time — the API counts a repeat view once.
+   */
+  onSlideView?: (storyId: string, authorId: number) => void;
 }
 
-const StoryViewer = ({ stories, initialStoryIndex, onClose, onReply }: StoryViewerProps) => {
+const StoryViewer = ({ stories, initialStoryIndex, onClose, onReply, onSlideView }: StoryViewerProps) => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -101,6 +117,14 @@ const StoryViewer = ({ stories, initialStoryIndex, onClose, onReply }: StoryView
     if (onReply) setReplyText("");
   };
 
+  // Report each story as it appears. Keyed on the ids rather than the indices so
+  // it fires once per story, not again when progress or pause state changes.
+  useEffect(() => {
+    if (currentSlide?.id && currentStory?.id !== undefined) {
+      onSlideView?.(currentSlide.id, currentStory.id);
+    }
+  }, [currentSlide?.id, currentStory?.id, onSlideView]);
+
   if (!currentStory || !currentSlide) return null;
 
   return (
@@ -147,7 +171,19 @@ const StoryViewer = ({ stories, initialStoryIndex, onClose, onReply }: StoryView
           onPointerDown={() => setIsPaused(true)}
           onPointerUp={() => setIsPaused(false)}
         >
-          {currentSlide.type === "image" ? (
+          {currentSlide.type === "text" ? (
+            <div
+              className="w-full h-full flex items-center justify-center p-8"
+              style={{
+                backgroundColor: currentSlide.backgroundColor ?? "#f97316",
+                color: currentSlide.textColor ?? "#ffffff",
+              }}
+            >
+              <p className="text-2xl font-semibold text-center whitespace-pre-wrap break-words">
+                {currentSlide.text}
+              </p>
+            </div>
+          ) : currentSlide.type === "image" ? (
             <img
               src={currentSlide.url}
               alt="Story"

@@ -191,6 +191,7 @@ export type NotificationType =
   | "ride_comment"
   | "ride_completed"
   | "ride_left"
+  | "crew_joined"
   | "connection_request"
   | "connection_accepted"
   | "reminder"
@@ -260,11 +261,16 @@ export interface NearbyRider {
 }
 
 export interface CrewIntent {
-  id: number;
+  /** A UUID from the API. */
+  id: string;
   creator: {
     name: string;
     avatar: string;
-    rating: number;
+    /**
+     * Optional because nothing computes it. There is no rider-rating source in
+     * this system, so it is absent on real crews and present only in demo data.
+     */
+    rating?: number;
   };
   title: string;
   description: string;

@@ -45,7 +45,7 @@ export const NEARBY_RIDERS: NearbyRider[] = [
 
 export const CREW_INTENTS: CrewIntent[] = [
   {
-    id: 1,
+    id: "demo-crew-1",
     creator: {
       name: "Rohit Kumar",
       avatar: "/api/placeholder/40/40",
@@ -66,7 +66,7 @@ export const CREW_INTENTS: CrewIntent[] = [
     timeAgo: "2 hours ago",
   },
   {
-    id: 2,
+    id: "demo-crew-2",
     creator: {
       name: "Sneha Reddy",
       avatar: "/api/placeholder/40/40",

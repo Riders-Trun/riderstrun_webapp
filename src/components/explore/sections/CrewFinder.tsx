@@ -7,34 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-interface CrewIntent {
-  id: number;
-  creator: {
-    name: string;
-    avatar: string;
-    rating: number;
-  };
-  title: string;
-  description: string;
-  lookingFor: number;
-  currentMembers: number;
-  rideType: string;
-  timePreference: string;
-  skillLevel: string;
-  route: string;
-  speed: string;
-  date: string;
-  requirements: string[];
-  timeAgo: string;
-}
+import type { CrewIntent } from "@/types";
 
 interface CrewFinderProps {
   crewIntents: CrewIntent[];
-  onJoinCrew?: (crewId: number) => void;
+  onJoinCrew?: (crewId: string) => void;
   onCreateIntent?: (intent: { title: string; description: string; lookingFor: number; rideType: string }) => void;
+  /** Disables the join buttons while a request is in flight. */
+  isJoining?: boolean;
 }
 
-const CrewFinder = ({ crewIntents, onJoinCrew, onCreateIntent }: CrewFinderProps) => {
+const CrewFinder = ({ crewIntents, onJoinCrew, onCreateIntent, isJoining }: CrewFinderProps) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newIntent, setNewIntent] = useState({
     title: "",
@@ -351,7 +334,7 @@ const CrewFinder = ({ crewIntents, onJoinCrew, onCreateIntent }: CrewFinderProps
               size="sm"
               onClick={() => onJoinCrew?.(intent.id)}
               className="bg-orange-500 hover:bg-orange-600"
-              disabled={intent.currentMembers >= intent.lookingFor}
+              disabled={isJoining || intent.currentMembers >= intent.lookingFor}
             >
               {intent.currentMembers >= intent.lookingFor ? "Full" : "Join Crew"}
             </Button>

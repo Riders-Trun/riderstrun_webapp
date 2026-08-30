@@ -159,7 +159,10 @@ export interface RiderSpotlight {
 }
 
 export interface RideMoment {
-  id: number;
+  /** A UUID from the API — media ids are not numbers. */
+  id: string;
+  /** The completed ride the photo was posted on. */
+  rideId?: string;
   rider: {
     name: string;
     avatar: string;
@@ -171,6 +174,8 @@ export interface RideMoment {
   participantsCount: number;
   taggedRiders: string[];
   hasUpcomingRide: boolean;
+  /** Where "Join Next Ride" goes. */
+  upcomingRideId?: string;
   upcomingRideDate?: string;
 }
 
