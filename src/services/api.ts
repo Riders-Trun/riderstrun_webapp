@@ -268,10 +268,24 @@ export const socialApi = {
       `/api/social/connections${status ? `?status=${encodeURIComponent(status)}` : ""}`,
       "connections"
     ),
-  connectionAction: (targetUserId: number, action: string) =>
+  /**
+   * Act on a connection, naming the rider by whichever identifier you hold.
+   *
+   * Suggestions carry a numeric id; search results carry only a username,
+   * because the id is internal and the search endpoint does not return it. The
+   * API accepts exactly one of the two, so this sends exactly one.
+   */
+  connectionAction: (target: { userId: number } | { username: string }, action: string) =>
     request<ApiResponse<Record<string, unknown>>>(
       "/api/social/connections",
-      { method: "POST", body: JSON.stringify({ targetUserId, action }) }
+      {
+        method: "POST",
+        body: JSON.stringify(
+          "userId" in target
+            ? { targetUserId: target.userId, action }
+            : { targetUsername: target.username, action }
+        ),
+      }
     ),
   search: (query: string) =>
     requestList<Record<string, unknown>>(

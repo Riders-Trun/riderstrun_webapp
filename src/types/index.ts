@@ -190,6 +190,7 @@ export type NotificationType =
   | "ride_join_approved"
   | "ride_comment"
   | "ride_completed"
+  | "ride_left"
   | "connection_request"
   | "connection_accepted"
   | "reminder"
@@ -234,7 +235,10 @@ export interface MyRide {
 // ===== Explore Types =====
 
 export interface NearbyRider {
+  /** 0 for a rider found by search: that endpoint returns no internal id. */
   id: number;
+  /** The public handle. Present on real riders; absent in demo data. */
+  username?: string;
   name: string;
   avatar: string;
   bike: string;

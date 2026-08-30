@@ -274,6 +274,7 @@ describe("toNearbyRider", () => {
     });
 
     expect(rider.id).toBe(7);
+    expect(rider.username).toBe("ghost_rider");
     expect(rider.name).toBe("Priya Sharma");
     expect(rider.distance).toBe("Bangalore");
     expect(rider.mutualConnections).toBe(3);
@@ -283,7 +284,9 @@ describe("toNearbyRider", () => {
     expect(toNearbyRider({ user_id: 7, username: "ghost_rider" }).name).toBe("ghost_rider");
   });
 
-  it("yields id 0 for a search row that carries none, so Connect can be withheld", () => {
-    expect(toNearbyRider({ username: "ghost_rider" }).id).toBe(0);
+  it("yields id 0 for a search row, but keeps the username it can be acted on by", () => {
+    const rider = toNearbyRider({ username: "ghost_rider" });
+    expect(rider.id).toBe(0);
+    expect(rider.username).toBe("ghost_rider");
   });
 });

@@ -1,5 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
+import { getRideTypeEmoji } from "@/lib/rideUtils";
 
 interface RideFiltersProps {
   rideTypes: string[];
@@ -8,18 +9,6 @@ interface RideFiltersProps {
 }
 
 const RideFilters = ({ rideTypes, selectedFilter, onFilterChange }: RideFiltersProps) => {
-  const getFilterEmoji = (type: string) => {
-    const emojis = {
-      "All": "🎯",
-      "Breakfast": "🍳",
-      "Adventure": "🏔️",
-      "Scenic": "🌅",
-      "Long Distance": "🛣️",
-      "Night Ride": "🌙"
-    };
-    return emojis[type as keyof typeof emojis] || "🏍️";
-  };
-
   return (
     <div className="px-4 pb-3 bg-white/30">
       <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-1">
@@ -34,7 +23,7 @@ const RideFilters = ({ rideTypes, selectedFilter, onFilterChange }: RideFiltersP
             }`}
             onClick={() => onFilterChange(type)}
           >
-            <span className="mr-1">{getFilterEmoji(type)}</span>
+            <span className="mr-1">{getRideTypeEmoji(type)}</span>
             {type}
           </Badge>
         ))}

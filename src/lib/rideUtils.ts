@@ -25,9 +25,18 @@ export const getTimeUntilRide = (dateString: string) => {
   return "Upcoming";
 };
 
+/**
+ * The one emoji per ride type.
+ *
+ * RideFilters kept its own copy that disagreed with this one — a Breakfast ride
+ * showed 🍳 on the filter pill and 🌅 on the card, and Scenic swapped between
+ * two different sunrises. Where the two differed the more distinctive symbol
+ * won; "All" comes from the filter map, which is the only place it appears.
+ */
 export const getRideTypeEmoji = (type: string) => {
   const emojis = {
-    "Breakfast": "🌅",
+    "All": "🎯",
+    "Breakfast": "🍳",
     "Adventure": "🏔️",
     "Scenic": "🌄",
     "Long Distance": "🛣️",

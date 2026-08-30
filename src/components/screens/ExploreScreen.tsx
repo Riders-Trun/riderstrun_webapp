@@ -202,7 +202,13 @@ const ExploreScreen = () => {
     : ((activeQuery.data ?? []) as ApiRider[]).map(toNearbyRider);
 
   const connect = useMutation({
-    mutationFn: (riderId: number) => socialApi.connectionAction(riderId, "request"),
+    // "send" is the API's action name for a connection request; there is no
+    // "request" action, and sending one is a 400.
+    mutationFn: (rider: NearbyRider) =>
+      socialApi.connectionAction(
+        rider.id ? { userId: rider.id } : { username: rider.username! },
+        "send"
+      ),
     onSuccess: () => {
       toast({ title: "Request sent", description: "They'll see your connection request." });
       // The suggestion list is ranked partly by who you are not yet connected to.
@@ -375,12 +381,13 @@ const ExploreScreen = () => {
                 <div className="grid grid-cols-1 gap-4">
                   {filteredRiders.map((rider, index) => (
                     <NearbyRiderCard
-                      key={rider.id || `${rider.name}-${index}`}
+                      key={rider.username || rider.id || `${rider.name}-${index}`}
                       rider={rider}
-                      // A rider with no id came from search, which projects only
-                      // public profile columns. There is nothing to send a request
-                      // about, so the action is withheld rather than shown broken.
-                      onConnect={rider.id ? (id) => connect.mutate(id) : undefined}
+                      // Either identifier works: suggestions carry an id, search
+                      // results carry a username. Only demo rows have neither.
+                      onConnect={
+                        rider.id || rider.username ? () => connect.mutate(rider) : undefined
+                      }
                     />
                   ))}
                 </div>

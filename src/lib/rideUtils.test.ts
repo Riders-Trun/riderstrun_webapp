@@ -68,8 +68,9 @@ describe('getTimeUntilRide', () => {
 
 describe('getRideTypeEmoji', () => {
   it('returns correct emoji for known types', () => {
-    expect(getRideTypeEmoji('Breakfast')).toBe('🌅');
+    expect(getRideTypeEmoji('Breakfast')).toBe('🍳');
     expect(getRideTypeEmoji('Adventure')).toBe('🏔️');
+    expect(getRideTypeEmoji('All')).toBe('🎯');
   });
 
   it('returns default motorcycle emoji for unknown type', () => {

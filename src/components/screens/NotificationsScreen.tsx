@@ -78,6 +78,7 @@ const NotificationsScreen = () => {
       case 'ride_join_approved': return CheckCircle;
       case 'ride_comment': return Bell;
       case 'ride_completed': return CheckCircle;
+      case 'ride_left': return AlertCircle;
       case 'connection_request': return Users;
       case 'connection_accepted': return Users;
       // Demo-only categories.
@@ -96,6 +97,7 @@ const NotificationsScreen = () => {
       case 'ride_join_approved': return 'text-green-600 bg-green-50';
       case 'ride_comment': return 'text-blue-600 bg-blue-50';
       case 'ride_completed': return 'text-green-600 bg-green-50';
+      case 'ride_left': return 'text-amber-600 bg-amber-50';
       case 'connection_request': return 'text-purple-600 bg-purple-50';
       case 'connection_accepted': return 'text-green-600 bg-green-50';
       case 'reminder': return 'text-blue-600 bg-blue-50';

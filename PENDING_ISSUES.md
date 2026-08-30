@@ -19,7 +19,53 @@ _Updated 2026-06-26 — working through issues in priority order._
 **✅ Priority 1 (type-safety gate) COMPLETE** — corrupt files gone, `tsc` at 0 errors, gate wired into build.
 **✅ Priority 2 (lint + CI) COMPLETE** — `npm run lint` fixed (exits 0), CI validates typecheck/lint/test/build on every push & PR.
 
-**Working quality gate is now in place** — regressions from here on are catchable. Remaining audit work is feature-wiring & correctness (Priorities 3–8).
+---
+
+## ✅ Second pass — 2026-08-30
+
+Priorities 3–8 were then worked through. **Everything functional in this
+document is resolved**; what remains is listed under "Still open" below.
+
+| Area | Outcome |
+|---|---|
+| Join a ride / join by code | Wired to `useJoinRide` and real trip-code resolution |
+| Explore | Riders come from `/api/social/suggestions` and `/api/social/search`; Connect is a real mutation. All 15 `console.log` stubs gone — `src/` has none left |
+| Profile / Notifications | Fetch the backend; notification action buttons navigate (the adapter had been dropping `ride_id`) |
+| Home filters & sorting | Distance, Bike CC, Group Size and Earliest-date all apply correctly |
+| Admin System tab | Health cards read the flat response; delete-ride wired behind a confirm dialog |
+| MyRides | Leave / View / Details / Edit / Share and both empty-state CTAs all act |
+| Plan a Ride | Resets and navigates on success; validation errors render inline |
+| Security headers | CSP, HSTS, XFO and friends in `vercel.json`; in-app logout in the sidebar and profile |
+| Dead code | 13 orphan Explore components, 25 unused shadcn primitives, `SearchFilters.tsx` and 25 unused dependencies deleted |
+| Duplication | `FilterOptions`, `NearbyRider`, ride-type emojis and the difficulty-colour alias reduced to one source each |
+
+**Two bugs found in this pass that the audit missed — both would have broken
+against the real API:**
+
+1. **Ride creation could never succeed.** The plan-a-ride form posted its own
+   field names (`startPoint`, `maxRiders`, no `start_date` at all) against a
+   server requiring `start_location` / `max_riders` / `start_date`. Every
+   submission would have failed validation. Fixed with `fromRideForm` in
+   `services/adapters.ts`, covered by tests.
+2. **Connect sent an action the API rejects.** `"request"` is not a member of
+   the action enum — the value is `"send"`.
+
+### Still open
+
+Nothing functional. What is left is deliberate, not deferred:
+
+- **Explore's stories, crews, mentors, ride moments, community initiatives and
+  invites** have no backend — no model, no endpoint. Each sits behind its own
+  feature flag, off, and the UI shows a "coming soon" panel rather than demo
+  content dressed as real.
+- **Travel Diary and Location Planner** are flagged off for the same reason.
+- **Password reset** is built end to end on both sides but flagged off until
+  `RESEND_API_KEY` is configured, since no link can be delivered without it.
+- **61 lint warnings** remain (down from 80). All are `react-refresh` and
+  `no-unused-vars` advisories, none block the build.
+
+Everything below this line is the original 2026-06-26 audit, kept as the record
+of what was found. Treat the tables above as the current status.
 
 **P2 detail — 5 `tsc` errors cleared:**
 1. ✅ `CommunityPostCard.tsx:3` — removed unused `SwipeUp` import (TS2305)

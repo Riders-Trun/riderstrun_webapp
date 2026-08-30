@@ -82,7 +82,7 @@ const RideCard = memo(({ ride }: RideCardProps) => {
     return TYPE_GRADIENTS[type] || "from-gray-500 to-gray-600";
   };
 
-  const getDifficultyColor = getDifficultyColorFromDistance;
+
   const getDifficultyLabel = getDifficultyFromDistance;
 
   return (
@@ -105,7 +105,7 @@ const RideCard = memo(({ ride }: RideCardProps) => {
               <Navigation className="w-3 h-3" />
               <span>{ride.distance}</span>
             </div>
-            <Badge className={`${getDifficultyColor(ride.distance)} text-xs`}>
+            <Badge className={`${getDifficultyColorFromDistance(ride.distance)} text-xs`}>
               {getDifficultyLabel(ride.distance)}
             </Badge>
           </div>

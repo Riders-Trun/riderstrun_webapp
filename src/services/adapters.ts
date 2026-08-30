@@ -308,6 +308,7 @@ const NOTIFICATION_ACTIONS: Record<string, string> = {
   ride_join_approved: "View ride",
   ride_comment: "View comment",
   ride_completed: "View ride",
+  ride_left: "View ride",
   connection_request: "View request",
   connection_accepted: "View profile",
 };
@@ -333,9 +334,9 @@ export function toNotification(api: ApiNotification): Notification {
 /**
  * A rider row from `/api/social/search` or `/api/social/suggestions`.
  *
- * `user_id` is present on suggestions but NOT on Postgres search results, which
- * project only the public profile columns. That is why it is optional here and
- * why `toNearbyRider` can return a rider with no id — see the note there.
+ * `user_id` is present on suggestions but never on search results, which project
+ * only the public profile columns on both storage engines. That is why it is
+ * optional here, and why `username` is what the connect path actually uses.
  */
 export interface ApiRider {
   user_id?: number | string;
@@ -356,13 +357,15 @@ export interface ApiRider {
  * are left at neutral values: status is always "looking", and the optional ones
  * stay undefined so the card omits those badges entirely.
  *
- * `id` is 0 when the row carried none. Callers must treat a 0 id as "cannot act
- * on this rider" and withhold Connect, because there is no id to send.
+ * `id` is 0 for a search row, which carries no id by design. That is not a dead
+ * end: `username` is always present, and the connections endpoint accepts a
+ * username in place of an id — so every rider here can be acted on either way.
  */
 export function toNearbyRider(api: ApiRider): NearbyRider {
   const id = toNumber(api.user_id ?? api.userId) ?? 0;
   return {
     id,
+    username: api.username,
     name: api.full_name || api.username || "Rider",
     avatar: api.avatar_url ?? "",
     bike: "",

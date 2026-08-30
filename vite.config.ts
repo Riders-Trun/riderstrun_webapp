@@ -27,14 +27,12 @@ export default defineConfig(({ mode }) => ({
     sourcemap: mode !== 'production',
     rollupOptions: {
       output: {
-        manualChunks: {
-          'radix': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-select',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-tooltip',
-          ],
+        // Radix is split out because it is large and changes rarely, so it stays
+        // cached across app deploys. Listed by prefix rather than by package:
+        // naming packages one by one meant removing an unused Radix dependency
+        // broke the build with "could not resolve entry module".
+        manualChunks(id: string) {
+          if (id.includes('node_modules/@radix-ui/')) return 'radix';
         },
       },
     },
